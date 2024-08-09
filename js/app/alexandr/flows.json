@@ -1,0 +1,341 @@
+[
+    {
+        "id": "473187a01c4e96dd",
+        "type": "tab",
+        "label": "Process",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "c1ae0d6036872b5d",
+        "type": "tab",
+        "label": "WSClient",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "ab051b8805ace00b",
+        "type": "inject",
+        "z": "473187a01c4e96dd",
+        "name": "Run",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "1",
+        "payloadType": "num",
+        "x": 170,
+        "y": 240,
+        "wires": [
+            [
+                "f644f672e30cac70"
+            ]
+        ]
+    },
+    {
+        "id": "f644f672e30cac70",
+        "type": "function",
+        "z": "473187a01c4e96dd",
+        "name": "Init",
+        "func": "global.get('ProcessSrv').Init();\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 350,
+        "y": 240,
+        "wires": [
+            [
+                "829d0eb16b38b129"
+            ]
+        ]
+    },
+    {
+        "id": "806b8bec25e4bf26",
+        "type": "inject",
+        "z": "473187a01c4e96dd",
+        "name": "Deploy",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "iso",
+        "payloadType": "date",
+        "x": 160,
+        "y": 40,
+        "wires": [
+            [
+                "9f59ef66d79a10d8"
+            ]
+        ]
+    },
+    {
+        "id": "31ad73619ac0f194",
+        "type": "debug",
+        "z": "473187a01c4e96dd",
+        "name": "debug 4",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 800,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "5b75167c6f0eac04",
+        "type": "link out",
+        "z": "473187a01c4e96dd",
+        "name": "link out 1",
+        "mode": "link",
+        "links": [
+            "0d2147a55031e3e6"
+        ],
+        "x": 435,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "4dc820d52b7768b7",
+        "type": "function",
+        "z": "473187a01c4e96dd",
+        "name": "Process",
+        "func": "let state;\nif (msg.payload == \"SystemBus startup successful\") {\n    const Logger = global.get('Logger');\n    // Создание Process\n    try {    \n        const SystemBus = global.get('SystemBus');\n        const ClassProcessSrv = global.get('ClassProcessSrv')({ SystemBus, Logger });\n        const ProcessSrv = new ClassProcessSrv();\n        global.set('ProcessSrv', ProcessSrv);\n\n        state = 'Process startup successful';\n        Logger.Log(Logger.LogLevel.INFO, state);\n        msg = { 'payload': state };\n    }\n    catch (e) {\n        Logger.Log(Logger.LogLevel.ERROR, e);\n        throw e;\n    }\n}\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 320,
+        "y": 160,
+        "wires": [
+            [
+                "17e313d70ccbe891",
+                "5b75167c6f0eac04"
+            ]
+        ]
+    },
+    {
+        "id": "17e313d70ccbe891",
+        "type": "debug",
+        "z": "473187a01c4e96dd",
+        "name": "debug 3",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 480,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "829d0eb16b38b129",
+        "type": "function",
+        "z": "473187a01c4e96dd",
+        "name": "ReturnConnections",
+        "func": "msg = {'payload': global.get('ProcessSrv')._SystemInfo};\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 550,
+        "y": 240,
+        "wires": [
+            [
+                "31ad73619ac0f194"
+            ]
+        ]
+    },
+    {
+        "id": "f97073ad1e8f4a75",
+        "type": "function",
+        "z": "473187a01c4e96dd",
+        "name": "SystemBus",
+        "func": "if (msg.payload == 'Logger startup successful') {\n    // Создание объекта системной шины\n    const Logger = global.get('Logger');\n    let state;\n    try {\n        const ClassSystemBus = global.get('events').EventEmitter;\n        const SystemBus = new ClassSystemBus();\n        global.set('SystemBus', SystemBus);\n\n        // TODO: Заменить на вызов логгера для вывода сообщения\n        state = 'SystemBus startup successful';\n        Logger.Log(Logger.LogLevel.INFO, state);\n        msg = { 'payload': state };\n    }\n    catch (e) {\n        Logger.Log(Logger.LogLevel.ERROR, e);\n        throw e;\n    }\n}\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 330,
+        "y": 100,
+        "wires": [
+            [
+                "e6b58dd73f55c487",
+                "4dc820d52b7768b7"
+            ]
+        ]
+    },
+    {
+        "id": "e6b58dd73f55c487",
+        "type": "debug",
+        "z": "473187a01c4e96dd",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 500,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "9f59ef66d79a10d8",
+        "type": "function",
+        "z": "473187a01c4e96dd",
+        "name": "Logger",
+        "func": "// Создание объекта системной шины\nlet state;\ntry {\n    const ClassLogger = global.get('ClassLogger');\n    const Logger = new ClassLogger();\n    global.set('Logger', Logger);\n\n    // TODO: Заменить на вызов логгера для вывода сообщения\n    state = 'Logger startup successful';\n    Logger.Log(Logger.LogLevel.INFO, state);\n    msg = { 'payload': state };\n}\ncatch (e) {\n    throw e;\n}\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 320,
+        "y": 40,
+        "wires": [
+            [
+                "7e9d4420ee408b50",
+                "f97073ad1e8f4a75"
+            ]
+        ]
+    },
+    {
+        "id": "7e9d4420ee408b50",
+        "type": "debug",
+        "z": "473187a01c4e96dd",
+        "name": "debug 2",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 480,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "206d117a6deec5ed",
+        "type": "inject",
+        "z": "473187a01c4e96dd",
+        "name": "ReturnInject",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 330,
+        "y": 320,
+        "wires": [
+            [
+                "829d0eb16b38b129"
+            ]
+        ]
+    },
+    {
+        "id": "0d2147a55031e3e6",
+        "type": "link in",
+        "z": "c1ae0d6036872b5d",
+        "name": "link in 1",
+        "links": [
+            "5b75167c6f0eac04"
+        ],
+        "x": 165,
+        "y": 60,
+        "wires": [
+            [
+                "846a67e18bc17236"
+            ]
+        ]
+    },
+    {
+        "id": "846a67e18bc17236",
+        "type": "function",
+        "z": "c1ae0d6036872b5d",
+        "name": "CreateWSClient",
+        "func": "// Создание WebSocket клиента\nlet state;\nif (msg.payload == \"Process startup successful\") {\n    const Logger = global.get('Logger');    \n    try {\n        const Process = global.get('ProcessSrv');\n        const SystemBus = global.get('SystemBus');\n        const { WebSocket, WebSocketServer } = global.get('ws');\n        const ClassWSClient = global.get('ClassWSClient')({Process, SystemBus, WebSocket, Logger});\n        const WSClient = new ClassWSClient();\n        global.set('WSClient', WSClient);\n\n        state = 'WSClient startup successful';\n        Logger.Log(Logger.LogLevel.INFO, state);\n        msg = {'payload': state};\n    }\n    catch (e) {\n        throw e;\n    }\n}\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 320,
+        "y": 60,
+        "wires": [
+            [
+                "0e47eee3f551c089"
+            ]
+        ]
+    },
+    {
+        "id": "0e47eee3f551c089",
+        "type": "debug",
+        "z": "c1ae0d6036872b5d",
+        "name": "debug 4",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 520,
+        "y": 60,
+        "wires": []
+    }
+]
