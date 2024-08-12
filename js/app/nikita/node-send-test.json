@@ -1,0 +1,103 @@
+[
+    {
+        "id": "f7d9c7b52e80aa29",
+        "type": "inject",
+        "z": "0dccef6673ab7549",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 220,
+        "y": 1620,
+        "wires": [
+            [
+                "02f595abc6a2b826"
+            ]
+        ]
+    },
+    {
+        "id": "02f595abc6a2b826",
+        "type": "function",
+        "z": "0dccef6673ab7549",
+        "name": "function 5",
+        "func": "global.get('SystemBus').emit('test', msg.payload, node.send);\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "// Добавленный здесь код будет исполняться\n// однократно при развертывании узла.\n\nsetTimeout(() => {\n    \n\n\n\n}, 40);",
+        "finalize": "",
+        "libs": [],
+        "x": 470,
+        "y": 1620,
+        "wires": [
+            [
+                "b650c8dee14bf929"
+            ]
+        ]
+    },
+    {
+        "id": "1e3a7c1094c99784",
+        "type": "function",
+        "z": "0dccef6673ab7549",
+        "name": "function 6",
+        "func": "\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "// Добавленный здесь код будет исполняться\n// однократно при развертывании узла.\nsetTimeout(() => {\n\nglobal.get('SystemBus').on('test', (val, cb) => {\n    cb({topic: 'hello', payload: val*1000 });\n    node.send({ topic: 'hello', payload: 1000 })\n});\n    \n}, 20);",
+        "finalize": "",
+        "libs": [],
+        "x": 460,
+        "y": 1700,
+        "wires": [
+            [
+                "57b35b313e7b0c72"
+            ]
+        ]
+    },
+    {
+        "id": "b650c8dee14bf929",
+        "type": "debug",
+        "z": "0dccef6673ab7549",
+        "name": "debug 22",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 780,
+        "y": 1620,
+        "wires": []
+    },
+    {
+        "id": "57b35b313e7b0c72",
+        "type": "debug",
+        "z": "0dccef6673ab7549",
+        "name": "debug 23",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 800,
+        "y": 1700,
+        "wires": []
+    }
+]
