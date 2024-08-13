@@ -1,7 +1,7 @@
 const EVENT_WSC_RECEIVE = 'pwsc-receive';
 const EVENT_PWSC_SEND = 'pwsc-send';
 const EVENT_PWS_CREATED = 'pwsc-created';
-
+const EVENT_CONNS_DONE = 'proc-connections-done';
 
 const LHP = {
     /**
@@ -45,18 +45,24 @@ const LHP = {
     }
 }
 
-module.exports = (dependencies) => { 
-    const { WSС, SystemBus, ProxyDB, Process } = dependencies;
+module.exports = () => { 
 /**
  * @class является придатком WS Client и реализует 
  * - передачу сообщений, полученных от WSC, системным службам  
  * - обработку запросов и сообщений со сторону служб 
  */
 class ProxyWSClient {
+    #_SystemBus;
 
     constructor(_opts = { saveRawData: false }) {
-        this._SaveRawData = _opts.saveRawData;
-        /************************************* EVENTS **********************************/
+        this._SaveRawData = _opts.saveRawData; 
+    }
+
+    Init({ SystemBus }) {
+        // Process передал список подключений, по которым будет выполнен запрос на получение списка каналов 
+        this.#_SystemBus.on(EVENT_CONNS_DONE, (sourcesInfo) => {
+            this._SourcesInfo = sourcesInfo;
+        });
         /**
          * @event
          * Получение LHP пакета от WS клиента
@@ -64,7 +70,7 @@ class ProxyWSClient {
          * @param {string} sourceKey - первоначальный идентификатор соединения
          */
         SystemBus.on(EVENT_WSC_RECEIVE, (msg, sourceKey) => {
-            const sourceName = Process.SystemInfo.Connections.find(conn => conn._hKey == sourceKey)._sourceName;
+            const sourceName = this._SourcesInfo._collection.find(conn => conn._hKey == sourceKey)._sourceName;
             this.#Receive(msg, sourceName);
         });
 
@@ -75,7 +81,7 @@ class ProxyWSClient {
          * @param {string} sourceName - имя соединения
          */
         SystemBus.on(EVENT_PWSC_SEND, (command, sourceName) => {
-            const sourceKey = Process.SystemInfo.Connections.find(conn => conn._sourceName == sourceName)._hKey;
+            const sourceKey = this._SourcesInfo._collection.find(conn => conn._sourceName == sourceName)._hKey;
             const msg = LHP.Pack(command);
             this.#Send(msg, sourceKey);
         });
