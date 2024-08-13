@@ -3,8 +3,20 @@
  * Класс предоставляет инструменты для логирования 
  */
 class ClassLogger {
-    constructor() {
+    constructor(_LoggerBus) {
         this._Enabled = true;
+        _LoggerBus.on('logInfo', (msg) => {
+            this.Log(this.LogLevel.INFO, msg)
+        });
+        _LoggerBus.on('logDebug', (msg) => {
+            this.Log(this.LogLevel.DEBUG, msg)
+        });
+        _LoggerBus.on('logWarn', (msg) => {
+            this.Log(this.LogLevel.WARN, msg)
+        });
+        _LoggerBus.on('logError', (msg) => {
+            this.Log(this.LogLevel.ERROR, msg)
+        });
     }
     /**
      * @setter
