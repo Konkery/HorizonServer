@@ -11,67 +11,24 @@ const COM_SUB_SENS_ALL = 'dm-sub-sensorall';
 
 
 module.exports = (dependencies) => {
-    const { SystemBus, ClassChannelSensor, ClassSensorInfo, ProxyDB, Process } = dependencies;
+    const { ClassChannelSensor, ClassSensorInfo } = dependencies;
     const GET_INFO_TIMEOUT = 3000;
     /**
      * @class
      * Реализует функционал службы для работы с измерительными каналами подключенного контроллера. Обеспечивает создание виртуальных двойников измерительных каналов, обработку их показаний, а также отправку команд 
      */
     class ClassDeviceManager {
+        #_SystemBus;
+        #_SourcesInfo;
         #_Channels = [];
-        #_DeviceInfo = [];              //список ClassSensorInfo
+        #_DeviceInfo = [];              // список ClassSensorInfo
+        #_GetInfoTimeout;               // таймер, который взводится при ожидании ответов на 'devicelist-get'
 
         #_ReqSent = 0;
         #_ResReceived = 0;                    
 
         constructor() {
-            // оповещение о том что получены ответы на команду get-info 
-            const readyCallback = () => {
-                SystemBus.emit(EVENT_DM_READY, { 
-                    requests: this.#_ReqSent,
-                    responses: this.#_ResReceived
-                });
-                
-                // Обновление кол-ва каналов от каждого подключения
-                this.UpdateSysInfoChCount();
 
-                this.#_ReqSent = 0; 
-                this.#_ResReceived = 0;
-
-                clearTimeout(this._GetInfoTimeout);
-                this._GetInfoTimeout = null;
-            }
-            // получена информация о списке каналов с одного источника  
-            SystemBus.on(EVENT_DM_LIST_GET, (info, sourceName) => {
-                this.#OnChannelsInfo(info, sourceName);
-                // соединение, с которого пришел ответ
-                const conn = Process.SystemInfo.Connections.find(conn => conn._sourceName == sourceName);
-                conn._providedDeviceInfo = true;
-                // подписка на показания каналов
-                this.SubSensAll(conn);
-
-                console.log(`DEBUG>> res rec from ${conn._sourceName} total: ${++this.#_ResReceived}`);
-
-                if (this.#_ResReceived === this.#_ReqSent)
-                    readyCallback();
-
-                SystemBus.emit(EVENT_DM_CREATED, this);
-            });
-
-            // Process передал список подключений, по которым будет выполнен запрос на получение списка каналов 
-            SystemBus.on(EVENT_CONNS_DONE, () => {
-                if (this._GetInfoTimeout) return;
-
-                Process.SystemInfo.Connections
-                    .filter(conn => conn._isConnected && !conn._providedDeviceInfo)
-                    .forEach(conn => {
-                        this.GetChannelsInfo(conn);
-                        console.log(`DEBUG>> req sent to ${conn} total: ${++this.#_ReqSent}`);
-                });
-                
-                // завершение ожидания по таймауту
-                this._GetInfoTimeout = setTimeout(readyCallback, GET_INFO_TIMEOUT);
-            });
         }
 
         get SensorChannels() {
@@ -89,7 +46,70 @@ module.exports = (dependencies) => {
             }, {});
             return list;
         }
+
+        Run({ SystemBus }) {
+            this.#_SystemBus = SystemBus;
+            // получена информация о списке каналов с одного источника  
+            this.#_SystemBus.on(EVENT_DM_LIST_GET, (info, sourceName) => this.#OnDevListGet(info, sourceName));
+            // Process передал список подключений, по которым будет выполнен запрос на получение списка каналов 
+            this.#_SystemBus.on(EVENT_CONNS_DONE, (sourcesInfo) => this.#OnSourcesInfo(sourcesInfo));
+        }
+
+        #OnDevListGet(info, sourceName) {
+            this.#CreateChsFromList(info, sourceName);
+            // соединение, с которого пришел ответ
+            const conn = this.#_SourcesInfo.Connections.find(conn => conn._sourceName == sourceName);
+            conn._providedDeviceInfo = true;
+            // подписка на показания каналов
+            this.SubSensAll(conn._sourceName);
+
+            if (this.#_ResReceived === this.#_ReqSent)
+                this.ReadyCb();
+
+            this.#_SystemBus.emit(EVENT_DM_CREATED, this);
+        }
+
+        /**
+         * @method
+         * Сохраняет информацию о источниках. Инициирует запросы на получение списка каналов 
+         * @param {object} sourcesInfo - информация о источниках/подключениях
+         * @returns 
+         */
+        #OnSourcesInfo(sourcesInfo) {
+            if (this.#_GetInfoTimeout) return;
+            this._SourcesInfo = sourcesInfo;
+
+            sourcesInfo.Connections
+                .filter(conn => conn._isConnected && !conn._providedDeviceInfo)
+                .forEach(conn => {
+                    this.GetChannelsInfo(conn);
+                    console.log(`DEBUG>> req sent to ${conn} total: ${++this.#_ReqSent}`);
+            });
             
+            // завершение ожидания по таймауту
+            this.#_GetInfoTimeout = setTimeout(this.ReadyCb, GET_INFO_TIMEOUT);
+        };
+
+        /** 
+         * @method
+         * Завершает ожидание 'devicelist-get' и оповещает о имеющихся результатах 
+         */
+        ReadyCb() {
+            this.#_SystemBus.emit(EVENT_DM_READY, { 
+                requests: this.#_ReqSent,
+                responses: this.#_ResReceived
+            });
+            
+            // Обновление кол-ва каналов от каждого подключения
+            this.UpdateSourceInfoChCount();
+
+            this.#_ReqSent = 0; 
+            this.#_ResReceived = 0;
+
+            clearTimeout(this.#_GetInfoTimeout);
+            this.#_GetInfoTimeout = null;
+        }
+
         /**
          * @method
          * Добавляет канал в реестр
@@ -129,7 +149,7 @@ module.exports = (dependencies) => {
          * @param {[String]} _infoStrings - массив строк формата <article>-<sens_id>-<ch_num>
          * @param {String} _sourceId - идентификатор источника
          */
-        #OnChannelsInfo(_infoStrings, _sourceId) {
+        #CreateChsFromList(_infoStrings, _sourceId) {
             _infoStrings.forEach(infoString => {
                 const [ article, id, chNum ] = infoString.split('-');
 
@@ -166,8 +186,8 @@ module.exports = (dependencies) => {
             const chConfig = this.GetChannelConfig(chId);
             const deviceInfo = this.#_DeviceInfo.find(dev => dev._Article === _article);
             const ch = new ClassChannelSensor(deviceInfo, { sourceId: _sourceId, deviceId: _deviceID, chNum: +_chNum }, chConfig);
-
-            SystemBus.emit(EVENT_DM_NEW_CH, ch.ID);
+            ch.Init({ SystemBus: this.#_SystemBus });
+            this.#_SystemBus.emit(EVENT_DM_NEW_CH, ch.ID);
             return ch;
         }
 
@@ -178,9 +198,9 @@ module.exports = (dependencies) => {
          */
         GetChannelsInfo(_connection) {
             if (_connection._type == 'plc')
-                SystemBus.emit(EVENT_PWSC_SEND, { com: COM_GET_DEVLIST, arg: [] }, _connection._sourceName);
+                this.#_SystemBus.emit(EVENT_PWSC_SEND, { com: COM_GET_DEVLIST, arg: [] }, _connection._sourceName);
             if (_connection._type == 'broker')
-                SystemBus.emit(EVENT_PMQTT_SEND, { com: COM_GET_DEVLIST, arg: [] }, _connection._sourceName);
+                this.#_SystemBus.emit(EVENT_PMQTT_SEND, { com: COM_GET_DEVLIST, arg: [] }, _connection._sourceName);
         }
 
         /**
@@ -190,11 +210,11 @@ module.exports = (dependencies) => {
          */
         Sub(_connection) {
             if (_connection._type == 'plc')
-                SystemBus.emit(EVENT_PWSC_SEND, { com: 'dm-sub', arg: [] }, _connection._sourceName);
+                this.#_SystemBus.emit(EVENT_PWSC_SEND, { com: 'dm-sub', arg: [] }, _connection._sourceName);
         }
 
-        SubSensAll(_connection) {
-            SystemBus.emit(EVENT_PWSC_SEND, { com: COM_SUB_SENS_ALL, arg: [] }, _connection._sourceName);
+        SubSensAll(_sourceName) {
+            this.#_SystemBus.emit(EVENT_PWSC_SEND, { com: COM_SUB_SENS_ALL, arg: [] }, _sourceName);
         }
 
         /**
@@ -205,7 +225,7 @@ module.exports = (dependencies) => {
          * @param  {...any} args 
          */
         Execute(_id, _methodName, ...args) {
-            SystemBus.emit(EVENT_PWSC_SEND, { com: 'dm-execute', arg: [_id, _methodName, ...args] });
+            this.#_SystemBus.emit(EVENT_PWSC_SEND, { com: 'dm-execute', arg: [_id, _methodName, ...args] });
         }
 
         /**
@@ -222,8 +242,8 @@ module.exports = (dependencies) => {
          * @method
          * Обновляет кол-во каналов от каждого подключения
          */
-        UpdateSysInfoChCount() {
-            Process.SystemInfo.Connections.forEach(conn => {
+        UpdateSourceInfoChCount() {
+            this.#_SourcesInfo.Connections.forEach(conn => {
                 conn._chCount = this.#_Channels.filter(ch => ch.SourceName === conn._sourceName).length;
             });
         }
