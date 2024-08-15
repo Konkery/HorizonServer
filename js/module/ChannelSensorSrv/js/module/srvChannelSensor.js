@@ -1,5 +1,4 @@
-module.exports = (dependencies) => {
-    const { SystemBus } = dependencies;
+module.exports = () => {
 
 /**
  * @typedef SensorOptsType - объект с описательными характеристиками датчика и параметрами, необходимых для обеспечения работы датчика
@@ -56,6 +55,7 @@ class ClassSensorInfo {
  * Класс, представляющий каждый отдельно взятый канал датчика.
  */
 class ClassChannelSensor {
+    #_SystemBus;
 
     #_ValueBuffer = {
         _depth : 1,
@@ -104,12 +104,6 @@ class ClassChannelSensor {
         this._TimeStamp;
         /****** */
         this.SetupConfig(_config);
-
-        SystemBus.on(`${this.ID}-raw`, (val) => {
-            // TODO: выполнить чтение из БД 
-            // this.Value = ProxyDB.ReadChValue(this.ID);
-            this.Value = val;
-        });
     }
     get Info()        { return this.#_SensorInfo; }
 
@@ -176,7 +170,7 @@ class ClassChannelSensor {
         val = this.#_Transform.TransformValue(val);
         this.#_ValueBuffer.push(val);
 
-        SystemBus.emit(`${this.ID}-fine`, this.Value);
+        this.#_SystemBus.emit(`${this.ID}-fine`, this.Value);
 
         this._DataUpdated = true;
         this._DataWasRead = false;
@@ -192,6 +186,14 @@ class ClassChannelSensor {
     set AvgCapacity(_cap) {
         if (_cap > 1)
             this.#_ValueBuffer._depth = _cap;
+    }
+
+    Init({ SystemBus }) {
+        SystemBus.on(`${this.ID}-raw`, (val) => {
+            // TODO: выполнить чтение из БД 
+            // this.Value = ProxyDB.ReadChValue(this.ID);
+            this.Value = val;
+        });
     }
 
     SetupConfig(_config) {
