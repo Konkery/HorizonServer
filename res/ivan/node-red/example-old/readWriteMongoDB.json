@@ -1,0 +1,1515 @@
+[
+    {
+        "id": "3d8e1466b763547b",
+        "type": "tab",
+        "label": "MongoDB Work",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "cf84ac0d42b54c78",
+        "type": "tab",
+        "label": "Table",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "c84aa3ab78a20af4",
+        "type": "tab",
+        "label": "Gauge",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "835eb204b3c3f9b5",
+        "type": "subflow",
+        "name": "Subflow 1",
+        "info": "",
+        "in": [],
+        "out": []
+    },
+    {
+        "id": "02616d46c0e7cb59",
+        "type": "mongodb",
+        "hostname": "127.0.0.1",
+        "topology": "direct",
+        "connectOptions": "",
+        "port": "27017",
+        "db": "sensordb",
+        "name": "saveDataMongodb"
+    },
+    {
+        "id": "77b5ccf53c0fa67c",
+        "type": "ui_tab",
+        "name": "Root",
+        "icon": "dashboard",
+        "order": 1,
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "df07d33c4c1cda4c",
+        "type": "ui_group",
+        "name": "Measurements",
+        "tab": "77b5ccf53c0fa67c",
+        "order": 1,
+        "disp": true,
+        "width": "18",
+        "collapse": false,
+        "className": "cl-measurements"
+    },
+    {
+        "id": "2dee2e04.7cf00a",
+        "type": "ui_group",
+        "name": "Messages",
+        "tab": "721af69.d130208",
+        "order": 1,
+        "disp": true,
+        "width": "9",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "721af69.d130208",
+        "type": "ui_tab",
+        "name": "Messages",
+        "icon": "dashboard",
+        "order": 2,
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "19b9f877e5746874",
+        "type": "ui_base",
+        "theme": {
+            "name": "theme-dark",
+            "lightTheme": {
+                "default": "#0094CE",
+                "baseColor": "#0094CE",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
+                "edited": true,
+                "reset": false
+            },
+            "darkTheme": {
+                "default": "#097479",
+                "baseColor": "#097479",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
+                "edited": true,
+                "reset": false
+            },
+            "customTheme": {
+                "name": "Untitled Theme 1",
+                "default": "#4B7930",
+                "baseColor": "#4B7930",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
+            },
+            "themeState": {
+                "base-color": {
+                    "default": "#097479",
+                    "value": "#097479",
+                    "edited": false
+                },
+                "page-titlebar-backgroundColor": {
+                    "value": "#097479",
+                    "edited": false
+                },
+                "page-backgroundColor": {
+                    "value": "#111111",
+                    "edited": false
+                },
+                "page-sidebar-backgroundColor": {
+                    "value": "#333333",
+                    "edited": false
+                },
+                "group-textColor": {
+                    "value": "#0eb8c0",
+                    "edited": false
+                },
+                "group-borderColor": {
+                    "value": "#555555",
+                    "edited": false
+                },
+                "group-backgroundColor": {
+                    "value": "#333333",
+                    "edited": false
+                },
+                "widget-textColor": {
+                    "value": "#eeeeee",
+                    "edited": false
+                },
+                "widget-backgroundColor": {
+                    "value": "#097479",
+                    "edited": false
+                },
+                "widget-borderColor": {
+                    "value": "#333333",
+                    "edited": false
+                },
+                "base-font": {
+                    "value": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
+                }
+            },
+            "angularTheme": {
+                "primary": "indigo",
+                "accents": "blue",
+                "warn": "red",
+                "background": "grey",
+                "palette": "light"
+            }
+        },
+        "site": {
+            "name": "Dashboard EcoLight",
+            "hideToolbar": "false",
+            "allowSwipe": "false",
+            "lockMenu": "true",
+            "allowTempTheme": "true",
+            "dateFormat": "DD/MM/YYYY",
+            "sizes": {
+                "sx": 48,
+                "sy": 48,
+                "gx": 6,
+                "gy": 6,
+                "cx": 6,
+                "cy": 6,
+                "px": 0,
+                "py": 0
+            }
+        }
+    },
+    {
+        "id": "3ca910b5.3d50a",
+        "type": "ui_group",
+        "name": "Group 1",
+        "tab": "20bb081.66afff8",
+        "order": 1,
+        "disp": false,
+        "width": "6",
+        "collapse": false
+    },
+    {
+        "id": "2c0d82c5cbab11fd",
+        "type": "ui_group",
+        "name": "Group 3",
+        "tab": "20bb081.66afff8",
+        "order": 3,
+        "disp": false,
+        "width": "6",
+        "collapse": false
+    },
+    {
+        "id": "d7e8ab4ae6aaf9bf",
+        "type": "ui_group",
+        "name": "Group 2",
+        "tab": "20bb081.66afff8",
+        "order": 2,
+        "disp": false,
+        "width": "6",
+        "collapse": false
+    },
+    {
+        "id": "20bb081.66afff8",
+        "type": "ui_tab",
+        "name": "Gauge",
+        "icon": "dashboard",
+        "order": 3,
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "03a3c48077d8155b",
+        "type": "ui_spacer",
+        "z": "cf84ac0d42b54c78",
+        "name": "spacer",
+        "group": "df07d33c4c1cda4c",
+        "order": 1,
+        "width": 1,
+        "height": 1
+    },
+    {
+        "id": "e8b4990fa0c267d0",
+        "type": "ui_group",
+        "name": "REPLoutput",
+        "tab": "77b5ccf53c0fa67c",
+        "order": 3,
+        "disp": true,
+        "width": "18",
+        "collapse": false,
+        "className": "cl-group-output-repl"
+    },
+    {
+        "id": "1247d43ae7b24ee7",
+        "type": "ui_group",
+        "name": "REPLinput",
+        "tab": "77b5ccf53c0fa67c",
+        "order": 2,
+        "disp": true,
+        "width": "18",
+        "collapse": false,
+        "className": "cl-group-input-repl"
+    },
+    {
+        "id": "634843d1ec6b47c9",
+        "type": "inject",
+        "z": "3d8e1466b763547b",
+        "name": "setintervalFind",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "1",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "true",
+        "payloadType": "bool",
+        "x": 160,
+        "y": 220,
+        "wires": [
+            [
+                "f683bb7f903a4e3c"
+            ]
+        ]
+    },
+    {
+        "id": "f683bb7f903a4e3c",
+        "type": "function",
+        "z": "3d8e1466b763547b",
+        "name": "findData",
+        "func": "msg.collection = 'dataSeries';\nmsg.payload = {};\nmsg.sort = {'timestamp': -1 };\nmsg.limit = 1;\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 340,
+        "y": 280,
+        "wires": [
+            [
+                "0091371f51706e2d"
+            ]
+        ]
+    },
+    {
+        "id": "0091371f51706e2d",
+        "type": "mongodb in",
+        "z": "3d8e1466b763547b",
+        "mongodb": "02616d46c0e7cb59",
+        "name": "findMDB",
+        "collection": "",
+        "operation": "find",
+        "x": 500,
+        "y": 220,
+        "wires": [
+            [
+                "783be965581270fa",
+                "d7d64f75b9175d89"
+            ]
+        ]
+    },
+    {
+        "id": "3dbb3f43fc76b9e0",
+        "type": "debug",
+        "z": "3d8e1466b763547b",
+        "name": "debugFind",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1090,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "25179a94feaf13c3",
+        "type": "mongodb out",
+        "z": "3d8e1466b763547b",
+        "mongodb": "02616d46c0e7cb59",
+        "name": "insertMDB",
+        "collection": "dataSeries",
+        "payonly": true,
+        "upsert": false,
+        "multi": false,
+        "operation": "insert",
+        "x": 510,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "9c8766a7a401d60c",
+        "type": "inject",
+        "z": "3d8e1466b763547b",
+        "name": "setintervalInsert",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "2",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "true",
+        "payloadType": "bool",
+        "x": 170,
+        "y": 80,
+        "wires": [
+            [
+                "c31c72c6d4f1416d"
+            ]
+        ]
+    },
+    {
+        "id": "c31c72c6d4f1416d",
+        "type": "function",
+        "z": "3d8e1466b763547b",
+        "name": "insertData",
+        "func": "const temp_msg = {};\n\nlet min = 15;\nlet max = 30;\nlet temp = Math.floor(Math.random() * (max - min + 1)) + min;\n\ntemp_msg.timestamp = new Date();\ntemp_msg.metadata = { \"sensorId\": 5578, \"type\": \"temperature\" };\ntemp_msg.temp = temp;\nmsg.payload = temp_msg;\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 350,
+        "y": 140,
+        "wires": [
+            [
+                "25179a94feaf13c3",
+                "c20abbd8ebeab3b8"
+            ]
+        ]
+    },
+    {
+        "id": "ebd254cbcd6e01f0",
+        "type": "debug",
+        "z": "3d8e1466b763547b",
+        "name": "debugInsert",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1090,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "783be965581270fa",
+        "type": "function",
+        "z": "3d8e1466b763547b",
+        "name": "convertDateOut",
+        "func": "// Если массива сообщений REPL еще нет, инициализируем его пустым массивом\nlet arr_str = flow.get('ArrStrOutputREPL') || [];\nlet timestamp = msg.payload[0].timestamp;\n\nmsg.payload[0].timestamp = moment(timestamp).format('L') + ' ' + moment(timestamp).format('LTS');\n    arr_str.push(JSON.stringify(msg.payload[0]) + '<br/>' + '<br/>'); //добавить новое сообщение в стек REPL\nflow.set('ArrStrOutputREPL', arr_str);\n    msg.payload = arr_str;\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [
+            {
+                "var": "moment",
+                "module": "moment"
+            }
+        ],
+        "x": 820,
+        "y": 280,
+        "wires": [
+            [
+                "3dbb3f43fc76b9e0",
+                "0708237593a4fd3e"
+            ]
+        ]
+    },
+    {
+        "id": "c20abbd8ebeab3b8",
+        "type": "function",
+        "z": "3d8e1466b763547b",
+        "name": "convertDateIn",
+        "func": "msg.payload.timestamp = moment(msg.payload.timestamp).format('L') +\n                        ' ' +\n                        moment(msg.payload.timestamp).format('LTS');\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [
+            {
+                "var": "moment",
+                "module": "moment"
+            }
+        ],
+        "x": 820,
+        "y": 140,
+        "wires": [
+            [
+                "ebd254cbcd6e01f0"
+            ]
+        ]
+    },
+    {
+        "id": "c0076605903ab680",
+        "type": "ui_gauge",
+        "z": "3d8e1466b763547b",
+        "name": "TemperatureGauge",
+        "group": "df07d33c4c1cda4c",
+        "order": 3,
+        "width": "6",
+        "height": "6",
+        "gtype": "gage",
+        "title": "Temperature",
+        "label": "C",
+        "format": "{{value}}%",
+        "min": "15",
+        "max": "35",
+        "colors": [
+            "#00b500",
+            "#ffff00",
+            "#ff0000"
+        ],
+        "seg1": "20",
+        "seg2": "25",
+        "diff": false,
+        "className": "cl-temperature-gauge",
+        "x": 1330,
+        "y": 660,
+        "wires": []
+    },
+    {
+        "id": "143e0bd1699e3b8f",
+        "type": "ui_text_input",
+        "z": "3d8e1466b763547b",
+        "name": "inputREPL",
+        "label": "",
+        "tooltip": "",
+        "group": "1247d43ae7b24ee7",
+        "order": 1,
+        "width": "18",
+        "height": "1",
+        "passthru": true,
+        "mode": "text",
+        "delay": "0",
+        "topic": "topic",
+        "sendOnBlur": false,
+        "className": "cl-text-input-repl",
+        "topicType": "msg",
+        "x": 1090,
+        "y": 500,
+        "wires": [
+            [
+                "e23fbadabb4c8a1b"
+            ]
+        ],
+        "icon": "font-awesome/fa-angle-right"
+    },
+    {
+        "id": "e23fbadabb4c8a1b",
+        "type": "debug",
+        "z": "3d8e1466b763547b",
+        "name": "debugInputREPL",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1330,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "0708237593a4fd3e",
+        "type": "ui_text",
+        "z": "3d8e1466b763547b",
+        "group": "e8b4990fa0c267d0",
+        "order": 1,
+        "width": "0",
+        "height": "0",
+        "name": "outputREPL",
+        "label": "",
+        "format": "{{msg.payload}}",
+        "layout": "row-left",
+        "className": "cl-text-output-repl",
+        "x": 1090,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "99bf51f7691534b7",
+        "type": "ui_chart",
+        "z": "3d8e1466b763547b",
+        "name": "TemperatureChart",
+        "group": "df07d33c4c1cda4c",
+        "order": 4,
+        "width": "18",
+        "height": "9",
+        "label": "Temperature",
+        "chartType": "line",
+        "legend": "true",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "15",
+        "ymax": "35",
+        "removeOlder": "10",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "60",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#ffff00",
+            "#000000",
+            "#000000",
+            "#ffff00",
+            "#000000",
+            "#000000",
+            "#ff0000",
+            "#000000",
+            "#000000"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "cl-temperature-chart",
+        "x": 1330,
+        "y": 700,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "d7d64f75b9175d89",
+        "type": "function",
+        "z": "3d8e1466b763547b",
+        "name": "extractDate",
+        "func": "//msg.payload = msg.payload.temp;\nmsg =   {   'topic': 'Temperature',\n            'payload': msg.payload[0].temp,\n            'timestamp': msg.payload[0].timestamp\n        };\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1090,
+        "y": 580,
+        "wires": [
+            [
+                "c0076605903ab680",
+                "99bf51f7691534b7",
+                "0ee74f709a342c05",
+                "82f6a4565070cc5f"
+            ]
+        ]
+    },
+    {
+        "id": "0ee74f709a342c05",
+        "type": "debug",
+        "z": "3d8e1466b763547b",
+        "name": "debug 8",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1300,
+        "y": 780,
+        "wires": []
+    },
+    {
+        "id": "f62f811d55fcc4ad",
+        "type": "ui_template",
+        "z": "3d8e1466b763547b",
+        "group": "df07d33c4c1cda4c",
+        "name": "Config-UI-outputREPL",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "format": "<style>\n    .cl-text-output-repl {\n        box-sizing: border-box!important;\n        height: 400px !important;\n        background-color: #666666 !important;\n    }\n\n    .cl-text-output-repl>.value {\n        color: #00cc00 !important;\n        font-size: 18px !important;\n        font-weight: normal !important;\n        /*overflow-wrap: break-word !important;*/\n    }\n</style>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 180,
+        "y": 420,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "b7eadb7882423b0b",
+        "type": "ui_template",
+        "z": "3d8e1466b763547b",
+        "group": "df07d33c4c1cda4c",
+        "name": "Config-Group-REPLoutput",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "format": "<style>\n    .cl-group-output-repl {\n        box-sizing: border-box !important;\n        width: 800px !important;\n        height: 600px !important;\n        display: inline-block !important;\n        vertical-align: bottom !important;\n        overflow-wrap: break-word !important;\n        overflow: scroll !important;\n    }\n</style>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 200,
+        "y": 500,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "35c2236766cdbf58",
+        "type": "ui_template",
+        "z": "3d8e1466b763547b",
+        "group": "df07d33c4c1cda4c",
+        "name": "gauge-style",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "format": "<style id=\"hotNipi-gauge\">\n:root{\n    --needle-color:#001100;\n    --sec-high-color:#ff00004f;\n    --sec-normal-color:#00ff004f;\n}\n.g-container {\n    padding-top: 3px;\n    padding-bottom: 3px;\n    width: 100%;\n    height: 100%;\n    position: relative;\n    display: flex;\n    justify-content: center;\n    align-items: center;\n    user-select:none;\n}\n    \n.g-body{\n    width:98%;\n    height:98%;\n    border-radius:15%;\n    position:relative;\n    display: flex;\n    align-content: center;\n    align-items: center;\n    justify-content: center;\n    box-shadow: 0px 5px 8px #00000045;\n    background:linear-gradient(0deg, rgba(78,78,78,1) 0%, rgba(215,215,215,1) 99%, rgba(236,236,236,1) 100%);\n}\n\n.g-body::before {    \n    content: \"\";\n    background-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSc1JyBoZWlnaHQ9JzUnPgogIDxyZWN0IHdpZHRoPSc1JyBoZWlnaHQ9JzUnIGZpbGw9J3doaXRlJy8+CiAgPHBhdGggZD0nTTAgNUw1IDBaTTYgNEw0IDZaTS0xIDFMMSAtMVonIHN0cm9rZT0nIzg4OCcgc3Ryb2tlLXdpZHRoPScxJy8+Cjwvc3ZnPg==\"); \n    background-repeat: repeat;\n    position: absolute;\n    top: 0px;\n    right: 0px;\n    bottom: 0px;\n    left: 0px;\n    opacity: 0.1;\n    border-radius:15%;\n}\n\n.g-ring{\n    width:90%;\n    height:90%;\n    border-radius:50%;\n    position:relative;\n    display: flex;\n    align-content: center;\n    align-items: center;\n    justify-content: center;\n   \n    background:linear-gradient(180deg, rgba(78,78,78,1) 0%, rgba(215,215,215,1) 99%, rgba(236,236,236,1) 100%);;\n}\n.g-plate {\n    overflow:hidden;\n    width: 90%;\n    height: 90%;\n    border-radius: 50%;\n    position: relative;\n    box-shadow: inset 0 0 15px black;\n    background: radial-gradient(circle, #dd8400 3%, rgb(196 205 209) 1%, rgb(177 183 186) 40%, rgb(108 114 120) 100%);\n}\n.g-sector{\n    width: 100%;\n    height: 100%;\n    position: absolute;\n    top: 50%;\n    left: 50%;\n   \n    transform-origin: 0 0;\n}\n.g-sector-high {\n    background: var(--sec-high-color);\n    transform: rotate(329deg) skew(12deg, 23deg);\n}\n.g-sector-normal {\n    background:var(--sec-normal-color);\n    transform: rotate(329deg) skew(12deg, 23deg);\n}\n.g-ticks {\n    position: absolute;\n    top:0;\n    left:0;\n    width: 100%;\n    height: 100%;\n    filter: drop-shadow(2px 4px 6px black);\n}\n.g-tick {\n    transform: rotate(calc(27deg * var(--ga-tick) - 71deg));\n    background: #000;\n    position: relative;\n    left: 0;\n    top: 50%;\n    width: 100%;\n    height: 1%;\n    margin-bottom: -1%;\n    background: linear-gradient(90deg,rgba(0,0,0,0) 0,rgba(0,0,0,0) 2%,rgb(0 0 0 / 60%) 2%,rgb(0 0 0 / 60%) 10%,rgba(0,0,0,0) 10%);\n}\n.g-num {\n    position: absolute;\n}\n.g-nums {\n    position: absolute;\n    top:0;\n    width: 100%;\n    height: 100%;\n    color: #000000a1;\n    font-size: calc(var(--container-size) * 16%);\n    font-weight: 500;\n    filter: drop-shadow(2px 4px 6px black);\n}\n.g-needle {\n    transform: rotate(calc(270deg * calc(var(--g-angle, 0deg) / 99) - 45deg));\n    transition: transform 1s;\n    background: #000;\n    position: absolute;\n    left: 0;\n    top: 49%;\n    width: 100%;\n    height: 2%;\n    filter:drop-shadow(0px 1px 3px #00000080);\n    background: linear-gradient(90deg,rgba(2,0,36,0) 0,rgba(0,0,0,0) 15%,var(--needle-color) 15%,var(--needle-color) 50%,rgba(0,0,0,0) 50%);\n}\n.g-needle-ring {\n    position: absolute;\n    width: calc(var(--container-size) * 1.5%);\n    height: calc(var(--container-size) * 1.5%);\n    top: 50%;\n    left: 50%;\n    background: var(--needle-color);\n    border-radius: 50%;\n    transform: translate(-50%, -50%);\n    box-shadow: 0 1px 4px #0000009c;\n}\n.g-val{\n    position: absolute;\n    text-align: center;\n    left: 50%;\n    bottom: 8%;\n    width: 80px;\n    transform: translateX(-50%);\n    font-family: monospace;\n    font-size:  calc(var(--container-size) * 40%);\n    color: #000000a1;\n    filter: drop-shadow(2px 3px 2px #00000080);\n}\n.g-label{\n    position: absolute;\n    text-align: center;\n    left: 50%;\n    top: 55%;\n    width: 100%;\n    transform: translateX(-50%);\n    font-family: monospace;\n    font-size:  calc(var(--container-size) * 18%);\n    color: #000000a1;\n    filter: drop-shadow(2px 3px 2px #00000080);\n}\n.g-rivets{\n    position: absolute;\n    left:0;\n    top:0;\n    width: 100%;\n    height: 100%;\n}\n\n.g-rivet {\n    position: absolute;\n    width: calc(var(--container-size) * 2px);\n    height: calc(var(--container-size) * 2px);\n    border-radius: 50px;\n    background: linear-gradient(135deg, #adadad 0%,#d3d3d3 51%,#d1d1d1 68%,#8c8c8c 100%);\n    box-shadow: 0px 2px 4px #000, -1px -1px 5px rgba(0,0,0,0.2);\n    border: 1px solid rgba(255,255,255,0.1);\n}\n.g-rivet:nth-child(1){\n    top:calc(var(--container-size) * 1.5px);\n    left:calc(var(--container-size) * 1.5px);\n}\n.g-rivet:nth-child(2){\n    top:calc(var(--container-size) * 1.5px);\n    right:calc(var(--container-size) * 1.5px);\n}\n.g-rivet:nth-child(3){\n    bottom:calc(var(--container-size) * 1.5px);\n    left:calc(var(--container-size) * 1.5px);\n}\n.g-rivet:nth-child(4){\n    bottom:calc(var(--container-size) * 1.5px);\n    right:calc(var(--container-size) * 1.5px);\n}\n\n.g-rivet::before {\n    content: '';\n    position: absolute;\n    left: 50%;\n    top: 50%;\n    width: calc(var(--container-size) * 10%);\n    height: calc(var(--container-size) * 10%);\n    box-shadow: inset 0px 1px 2px #222;\n    transform: translate(-50%, -50%);\n    border-radius: 50%;\n    border-bottom: 1px solid rgba(255,255,255,0.3);\n}\n</style>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 150,
+        "y": 560,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "82f6a4565070cc5f",
+        "type": "ui_template",
+        "z": "3d8e1466b763547b",
+        "group": "df07d33c4c1cda4c",
+        "name": "TemperatureGaugeArt",
+        "order": 4,
+        "width": "6",
+        "height": "6",
+        "format": "<div id=\"{{'gauge_'+$id}}\" class=\"g-container\" style=\"-g-angle:0; --container-size:6\">\n    <div id=\"bgr\" class=\"g-body\">\n        <div class=\"g-ring\">\n            <div class=\"g-rivets\">\n                <div class=g-rivet></div>\n                <div class=g-rivet></div>\n                <div class=g-rivet></div>\n                <div class=g-rivet></div>\n            </div>\n            <div class=\"g-plate\">\n                <div class=\"g-sector g-sector-normal\" style=\"transform: rotate(193deg) skew(291deg, 23deg);\"></div>\n                <div class=\"g-sector g-sector-high\" style=\"transform: rotate(329deg) skew(12deg,23deg);\"></div>\n                <div class=\"g-ticks\">\n                    <div class=\"g-tick\" style=\"--ga-tick:1;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:2;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:3;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:4;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:5;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:6;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:7;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:8;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:9;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:10;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:11;\"></div>\n                </div>\n                <div class=\"g-nums\">\n                    <div class=\"g-num\" style=\"left: 23%;top: 71%;\">0</div>\n                    <div class=\"g-num\" style=\"left: 13%;top: 56%;\">10</div>\n                    <div class=\"g-num\" style=\"left: 13%;top: 39%;\">20</div>\n                    <div class=\"g-num\" style=\"left: 19%;top: 24%;\">30</div>\n                    <div class=\"g-num\" style=\"left: 31%;top: 14%;\">40</div>\n                    <div class=\"g-num\" style=\"left: 47%;top: 10%;\">50</div>\n                    <div class=\"g-num\" style=\"left: 63%;top: 14%;\">60</div>\n                    <div class=\"g-num\" style=\"left: 74%;top: 25%;\">70</div>\n                    <div class=\"g-num\" style=\"left: 79%;top: 40%;\">80</div>\n                    <div class=\"g-num\" style=\"left: 78%;top: 56%;\">90</div>\n                    <div class=\"g-num\" style=\"left:65%; top:71%;\">100</div>\n                </div>\n                <div class=\"g-label\">Temperature</div>\n                <div class=\"g-needle\"></div>\n                <div class=\"g-needle-ring\"></div>\n                <div id=\"{{'gauge_val_'+$id}}\" class=\"g-val\"></div>\n            </div>\n        </div>\n    </div>\n</div>\n<script>\n(function(scope) {\n    let min = 0;\n    let max = 100;\n    scope.$watch('msg', function(msg) {\n        if (msg) {\n            const v = Math.floor(((msg.payload - min) / (max - min)) * 100);\n            document.getElementById('gauge_'+scope.$id).style.setProperty('--g-angle', v);\n            document.getElementById('gauge_val_'+scope.$id).innerText = msg.payload;\n        }   \n  });\n})(scope);\n</script>\n",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 1340,
+        "y": 600,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "cdcecbe2.6d735",
+        "type": "inject",
+        "z": "cf84ac0d42b54c78",
+        "name": "msg1",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"msg\":\"Message one, bla bla fdgdfs\",\"confirm\":1}",
+        "payloadType": "json",
+        "x": 110,
+        "y": 160,
+        "wires": [
+            [
+                "99024603.3601e8"
+            ]
+        ]
+    },
+    {
+        "id": "99024603.3601e8",
+        "type": "function",
+        "z": "cf84ac0d42b54c78",
+        "name": "add ts",
+        "func": "js_obj      = msg.payload;\n\nvar d       = new Date();\nvar jstime  = d.getTime();\nvar time    = (d.getHours()) + \":\" + d.getMinutes();\nvar date    = d.getDate() + \".\" + (d.getMonth()+1) + \".\" + (d.getFullYear());\n\njs_obj.timestamp = jstime;\njs_obj.timedate  = time + ' ' + date ;\n\nmsg.payload = js_obj ;\n\nreturn msg;\n\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 330,
+        "y": 380,
+        "wires": [
+            [
+                "7d8d17fe.98adc"
+            ]
+        ]
+    },
+    {
+        "id": "3c80930.d411eee",
+        "type": "inject",
+        "z": "cf84ac0d42b54c78",
+        "name": "msg2",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"msg\":\"Message two, blip bloep\",\"confirm\":1}",
+        "payloadType": "json",
+        "x": 110,
+        "y": 200,
+        "wires": [
+            [
+                "99024603.3601e8"
+            ]
+        ]
+    },
+    {
+        "id": "a234d77e.94cd78",
+        "type": "inject",
+        "z": "cf84ac0d42b54c78",
+        "name": "msg3",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"msg\":\"Message three, cat fish\",\"confirm\":0}",
+        "payloadType": "json",
+        "x": 110,
+        "y": 240,
+        "wires": [
+            [
+                "99024603.3601e8"
+            ]
+        ]
+    },
+    {
+        "id": "47baa34f.8a66d4",
+        "type": "inject",
+        "z": "cf84ac0d42b54c78",
+        "name": "msg4",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"msg\":\"Message four, send it !\",\"confirm\":0}",
+        "payloadType": "json",
+        "x": 110,
+        "y": 280,
+        "wires": [
+            [
+                "99024603.3601e8"
+            ]
+        ]
+    },
+    {
+        "id": "665c55eb.395164",
+        "type": "inject",
+        "z": "cf84ac0d42b54c78",
+        "name": "msg5",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"msg\":\"Message five, my crazy\",\"confirm\":0}",
+        "payloadType": "json",
+        "x": 110,
+        "y": 320,
+        "wires": [
+            [
+                "99024603.3601e8"
+            ]
+        ]
+    },
+    {
+        "id": "c561b43c.c8d868",
+        "type": "inject",
+        "z": "cf84ac0d42b54c78",
+        "name": "msg6",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"msg\":\"Message six, whoop whoop !\",\"confirm\":0}",
+        "payloadType": "json",
+        "x": 110,
+        "y": 360,
+        "wires": [
+            [
+                "99024603.3601e8"
+            ]
+        ]
+    },
+    {
+        "id": "759b7950.d10cc",
+        "type": "inject",
+        "z": "cf84ac0d42b54c78",
+        "name": "msg7",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"msg\":\"Message seven\",\"confirm\":1}",
+        "payloadType": "json",
+        "x": 110,
+        "y": 400,
+        "wires": [
+            [
+                "99024603.3601e8"
+            ]
+        ]
+    },
+    {
+        "id": "45a36c23.5afdec",
+        "type": "inject",
+        "z": "cf84ac0d42b54c78",
+        "name": "msg8",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"msg\":\"Message 8, whats up monkey?\",\"confirm\":0}",
+        "payloadType": "json",
+        "x": 110,
+        "y": 440,
+        "wires": [
+            [
+                "99024603.3601e8"
+            ]
+        ]
+    },
+    {
+        "id": "5ab58b1.12dcbf4",
+        "type": "inject",
+        "z": "cf84ac0d42b54c78",
+        "name": "msg9",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"msg\":\"Message 9, fly away\",\"confirm\":0}",
+        "payloadType": "json",
+        "x": 110,
+        "y": 480,
+        "wires": [
+            [
+                "99024603.3601e8"
+            ]
+        ]
+    },
+    {
+        "id": "874b1268.c86078",
+        "type": "inject",
+        "z": "cf84ac0d42b54c78",
+        "name": "msg10",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"msg\":\"Message 10, diving for gold\",\"confirm\":0}",
+        "payloadType": "json",
+        "x": 110,
+        "y": 520,
+        "wires": [
+            [
+                "99024603.3601e8"
+            ]
+        ]
+    },
+    {
+        "id": "38e0e183.62f526",
+        "type": "inject",
+        "z": "cf84ac0d42b54c78",
+        "name": "msg11",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"msg\":\"Message 11, flying fish\",\"confirm\":1}",
+        "payloadType": "json",
+        "x": 110,
+        "y": 560,
+        "wires": [
+            [
+                "99024603.3601e8"
+            ]
+        ]
+    },
+    {
+        "id": "e50a91a3.3c26e8",
+        "type": "inject",
+        "z": "cf84ac0d42b54c78",
+        "name": "msg12",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"msg\":\"Message 12, octopus\",\"confirm\":0}",
+        "payloadType": "json",
+        "x": 110,
+        "y": 600,
+        "wires": [
+            [
+                "99024603.3601e8"
+            ]
+        ]
+    },
+    {
+        "id": "25db79c3.7807c6",
+        "type": "inject",
+        "z": "cf84ac0d42b54c78",
+        "name": "msg13",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"msg\":\"Message 13, swim away\",\"confirm\":0}",
+        "payloadType": "json",
+        "x": 110,
+        "y": 640,
+        "wires": [
+            [
+                "99024603.3601e8"
+            ]
+        ]
+    },
+    {
+        "id": "91364718.97ddb",
+        "type": "inject",
+        "z": "cf84ac0d42b54c78",
+        "name": "msg14",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"msg\":\"Message 14, warra warra\",\"confirm\":0}",
+        "payloadType": "json",
+        "x": 110,
+        "y": 680,
+        "wires": [
+            [
+                "99024603.3601e8"
+            ]
+        ]
+    },
+    {
+        "id": "4b2dfa38.a37f24",
+        "type": "inject",
+        "z": "cf84ac0d42b54c78",
+        "name": "msg15",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"msg\":\"Message 15, fish paste\",\"confirm\":0}",
+        "payloadType": "json",
+        "x": 110,
+        "y": 720,
+        "wires": [
+            [
+                "99024603.3601e8"
+            ]
+        ]
+    },
+    {
+        "id": "f6cbee6d.01b758",
+        "type": "template",
+        "z": "cf84ac0d42b54c78",
+        "name": "html",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "html",
+        "syntax": "mustache",
+        "template": "<table border=\"1\">\n    \n    \n    <thead>\n        <tr>\n            <th colspan=\"3\">{{topic}}</th>\n        </tr>\n    </thead>\n    \n    \n    <tr>\n        <th>Message</th>\n        <th>Confirm</th>\n        <th>Time & Date</th>\n\n    </tr>\n    {{#payload}}\n        <tr class=\"\">\n            <td>{{msg}}</td>            \n            <td>{{confirm}}</td>\n            <td>{{timedate}}</td>\n        </tr>\n    {{/payload}}\n</table>\n",
+        "output": "str",
+        "x": 850,
+        "y": 440,
+        "wires": [
+            [
+                "3e0498a5.b8f04",
+                "8a1e52fe2d260e7a"
+            ]
+        ]
+    },
+    {
+        "id": "3e0498a5.b8f04",
+        "type": "ui_template",
+        "z": "cf84ac0d42b54c78",
+        "group": "2dee2e04.7cf00a",
+        "name": "Scrolling Messages",
+        "order": 0,
+        "width": 0,
+        "height": 0,
+        "format": "<div ng-bind-html=\"msg.payload\" height=\"500\" style=\"height: 350px;\"></div>",
+        "storeOutMessages": false,
+        "fwdInMessages": false,
+        "resendOnRefresh": false,
+        "templateScope": "local",
+        "className": "",
+        "x": 950,
+        "y": 380,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "7d8d17fe.98adc",
+        "type": "function",
+        "z": "cf84ac0d42b54c78",
+        "name": "Cr/Upd msg_events",
+        "func": "var msg_obj       = msg.payload ;\nvar arr_msgs = flow.get(\"msg_events\", 'memoryOnly');\n\nif (arr_msgs===undefined ) {\n    // Create an empty array if it does not exist yet\n    arr_msgs = [];\n    //arr_msgs.push(msg_obj) ; \n        if (msg_obj !== \"1\") {\n            arr_msgs.push(msg_obj);\n            flow.set(\"msg_events\",arr_msgs, 'memoryOnly');\n        }\n    \n//    return msg ;\n\n} else {\n        // This is a new user, save and return in the first port\n        if (msg_obj !== \"1\") {\n            arr_msgs.push(msg_obj);\n            flow.set(\"msg_events\",arr_msgs, 'memoryOnly');\n        }\n} \nmsg.payload = flow.get(\"msg_events\", 'memoryOnly');\nreturn msg;\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 420,
+        "y": 440,
+        "wires": [
+            [
+                "c748be29.1c57"
+            ]
+        ]
+    },
+    {
+        "id": "34fabfbc.b51fd",
+        "type": "function",
+        "z": "cf84ac0d42b54c78",
+        "name": "zap msg_events flow context",
+        "func": "var cfg = undefined ;\nflow.set('msg_events', cfg, 'memoryOnly');\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 400,
+        "y": 80,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "b057c9f8.ace21",
+        "type": "inject",
+        "z": "cf84ac0d42b54c78",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": "0.1",
+        "topic": "",
+        "payload": "1",
+        "payloadType": "str",
+        "x": 110,
+        "y": 80,
+        "wires": [
+            [
+                "34fabfbc.b51fd"
+            ]
+        ]
+    },
+    {
+        "id": "7311ad45.6cf814",
+        "type": "function",
+        "z": "cf84ac0d42b54c78",
+        "name": "topic & 10",
+        "func": "var arr = msg.payload ;\n\nvar i   = 10;\nif(typeof arr === undefined) {\n    return ;\n} else {\n    msg.payload = arr.slice(0, 10);    \n    msg.topic = 'The Last Ten Messages :';\n    return msg;\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 710,
+        "y": 380,
+        "wires": [
+            [
+                "f6cbee6d.01b758"
+            ]
+        ]
+    },
+    {
+        "id": "c748be29.1c57",
+        "type": "change",
+        "z": "cf84ac0d42b54c78",
+        "name": "sort",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "(\t   $sort(\t       payload,\t       function($l , $r){$l.timestamp < $r.timestamp }\t   ) \t)",
+                "tot": "jsonata"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 510,
+        "y": 380,
+        "wires": [
+            [
+                "e2cfb5dc.3a532",
+                "7311ad45.6cf814"
+            ]
+        ]
+    },
+    {
+        "id": "e2cfb5dc.3a532",
+        "type": "debug",
+        "z": "cf84ac0d42b54c78",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 870,
+        "y": 500,
+        "wires": []
+    },
+    {
+        "id": "8a1e52fe2d260e7a",
+        "type": "debug",
+        "z": "cf84ac0d42b54c78",
+        "name": "debug 9",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1020,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "fd72c5cbed695966",
+        "type": "ui_template",
+        "z": "c84aa3ab78a20af4",
+        "group": "3ca910b5.3d50a",
+        "name": "gauge",
+        "order": 4,
+        "width": "3",
+        "height": "3",
+        "format": "\n<div id=\"{{'gauge_'+$id}}\" class=\"g-container\" style=\"--g-angle:0; --container-size:3;\">\n    <div id=\"bgr\" class=\"g-body\">\n        <div class=\"g-ring\">\n            <div class=\"g-plate\">\n                <div class=\"g-ticks\">\n                    <div class=\"g-tick\" style=\"--ga-tick:1;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:2;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:3;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:4;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:5;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:6;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:7;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:8;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:9;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:10;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:11;\"></div>\n                </div>\n                <div class=\"g-label\">Temperature</div>\n                <div class=\"g-needle\"></div>\n                <div class=\"g-needle-ring\"></div>\n                <div id=\"{{'gauge_val_'+$id}}\" class=\"g-val\"></div>\n            </div>\n        </div>\n    </div>\n</div>\n<script>\n  (function(scope) {\n    let min = 0;\n    let max = 100;\n    scope.$watch('msg', function(msg) {\n        if (msg) {\n            const v = Math.floor(((msg.payload - min) / (max - min)) * 100);\n            document.getElementById('gauge_'+scope.$id).style.setProperty('--g-angle', v);\n            document.getElementById('gauge_val_'+scope.$id).innerText = msg.payload;\n        }   \n  });\n})(scope);\n</script>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 590,
+        "y": 320,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "b21d274b8315c0f7",
+        "type": "inject",
+        "z": "c84aa3ab78a20af4",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "6",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 230,
+        "y": 340,
+        "wires": [
+            [
+                "4726db59163e1b14",
+                "dcd7d89bb2be17bf",
+                "621f5130273563c7"
+            ]
+        ]
+    },
+    {
+        "id": "9aa3095c7d603553",
+        "type": "ui_template",
+        "z": "c84aa3ab78a20af4",
+        "group": "3ca910b5.3d50a",
+        "name": "gauge",
+        "order": 4,
+        "width": "4",
+        "height": "4",
+        "format": "<div id=\"{{'gauge_'+$id}}\" class=\"g-container\" style=\"--g-angle:0; --container-size:4\">\n    <div id=\"bgr\" class=\"g-body\">\n        <div class=\"g-ring\">\n            <div class=\"g-plate\">\n                \n                <div class=\"g-ticks\">\n                    <div class=\"g-tick\" style=\"--ga-tick:1;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:2;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:3;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:4;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:5;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:6;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:7;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:8;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:9;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:10;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:11;\"></div>\n\n                </div>\n                <div class=\"g-nums\">\n                    <div class=\"g-num\" style=\"left:24%; top:70%;\">0</div>\n                    <div class=\"g-num\" style=\"left:20%; top:26%;\">30</div>\n                    <div class=\"g-num\" style=\"left:47%; top:11%;\">50</div>\n                    <div class=\"g-num\" style=\"left:74%; top:26%;\">70</div>\n                    <div class=\"g-num\" style=\"left:65%; top:71%;\">100</div>\n                </div>\n                <div class=\"g-label\">Temperature</div>\n                <div class=\"g-needle\"></div>\n                <div class=\"g-needle-ring\"></div>\n                <div id=\"{{'gauge_val_'+$id}}\" class=\"g-val\"></div>\n            </div>\n            <div class=\"g-rivets\">\n                    <div class=g-rivet></div>\n                    <div class=g-rivet></div>\n                    <div class=g-rivet></div>\n                    <div class=g-rivet></div>\n                </div>\n        </div>\n    </div>\n</div>\n<script>\n    (function(scope) {\n    let min = 0;\n    let max = 100;\n    scope.$watch('msg', function(msg) {\n        if (msg) {\n            const v = Math.floor(((msg.payload - min) / (max - min)) * 100);\n            document.getElementById('gauge_'+scope.$id).style.setProperty('--g-angle', v);\n            document.getElementById('gauge_val_'+scope.$id).innerText = msg.payload;\n        }   \n  });\n})(scope);\n</script>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "x": 590,
+        "y": 400,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "c351447745138c19",
+        "type": "ui_template",
+        "z": "c84aa3ab78a20af4",
+        "group": "3ca910b5.3d50a",
+        "name": "gauge-style",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "format": "<style id=\"hotNipi-gauge\">\n:root{\n    --needle-color:#001100;\n    --sec-high-color:#ff00004f;\n    --sec-normal-color:#00ff004f;\n}\n.g-container {\n    padding-top: 3px;\n    padding-bottom: 3px;\n    width: 100%;\n    height: 100%;\n    position: relative;\n    display: flex;\n    justify-content: center;\n    align-items: center;\n    user-select:none;\n}\n    \n.g-body{\n    width:98%;\n    height:98%;\n    border-radius:15%;\n    position:relative;\n    display: flex;\n    align-content: center;\n    align-items: center;\n    justify-content: center;\n    box-shadow: 0px 5px 8px #00000045;\n    background:linear-gradient(0deg, rgba(78,78,78,1) 0%, rgba(215,215,215,1) 99%, rgba(236,236,236,1) 100%);\n}\n\n.g-body::before {    \n    content: \"\";\n    background-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSc1JyBoZWlnaHQ9JzUnPgogIDxyZWN0IHdpZHRoPSc1JyBoZWlnaHQ9JzUnIGZpbGw9J3doaXRlJy8+CiAgPHBhdGggZD0nTTAgNUw1IDBaTTYgNEw0IDZaTS0xIDFMMSAtMVonIHN0cm9rZT0nIzg4OCcgc3Ryb2tlLXdpZHRoPScxJy8+Cjwvc3ZnPg==\"); \n    background-repeat: repeat;\n    position: absolute;\n    top: 0px;\n    right: 0px;\n    bottom: 0px;\n    left: 0px;\n    opacity: 0.1;\n    border-radius:15%;\n}\n\n.g-ring{\n    width:90%;\n    height:90%;\n    border-radius:50%;\n    position:relative;\n    display: flex;\n    align-content: center;\n    align-items: center;\n    justify-content: center;\n   \n    background:linear-gradient(180deg, rgba(78,78,78,1) 0%, rgba(215,215,215,1) 99%, rgba(236,236,236,1) 100%);;\n}\n.g-plate {\n    overflow:hidden;\n    width: 90%;\n    height: 90%;\n    border-radius: 50%;\n    position: relative;\n    box-shadow: inset 0 0 15px black;\n    background: radial-gradient(circle, #dd8400 3%, rgb(196 205 209) 1%, rgb(177 183 186) 40%, rgb(108 114 120) 100%);\n}\n.g-sector{\n    width: 100%;\n    height: 100%;\n    position: absolute;\n    top: 50%;\n    left: 50%;\n   \n    transform-origin: 0 0;\n}\n.g-sector-high {\n    background: var(--sec-high-color);\n    transform: rotate(329deg) skew(12deg, 23deg);\n}\n.g-sector-normal {\n    background:var(--sec-normal-color);\n    transform: rotate(329deg) skew(12deg, 23deg);\n}\n.g-ticks {\n    position: absolute;\n    top:0;\n    left:0;\n    width: 100%;\n    height: 100%;\n    filter: drop-shadow(2px 4px 6px black);\n}\n.g-tick {\n    transform: rotate(calc(27deg * var(--ga-tick) - 71deg));\n    background: #000;\n    position: relative;\n    left: 0;\n    top: 50%;\n    width: 100%;\n    height: 1%;\n    margin-bottom: -1%;\n    background: linear-gradient(90deg,rgba(0,0,0,0) 0,rgba(0,0,0,0) 2%,rgb(0 0 0 / 60%) 2%,rgb(0 0 0 / 60%) 10%,rgba(0,0,0,0) 10%);\n}\n.g-num {\n    position: absolute;\n}\n.g-nums {\n    position: absolute;\n    top:0;\n    width: 100%;\n    height: 100%;\n    color: #000000a1;\n    font-size: calc(var(--container-size) * 16%);\n    font-weight: 500;\n    filter: drop-shadow(2px 4px 6px black);\n}\n.g-needle {\n    transform: rotate(calc(270deg * calc(var(--g-angle, 0deg) / 99) - 45deg));\n    transition: transform 1s;\n    background: #000;\n    position: absolute;\n    left: 0;\n    top: 49%;\n    width: 100%;\n    height: 2%;\n    filter:drop-shadow(0px 1px 3px #00000080);\n    background: linear-gradient(90deg,rgba(2,0,36,0) 0,rgba(0,0,0,0) 15%,var(--needle-color) 15%,var(--needle-color) 50%,rgba(0,0,0,0) 50%);\n}\n.g-needle-ring {\n    position: absolute;\n    width: calc(var(--container-size) * 1.5%);\n    height: calc(var(--container-size) * 1.5%);\n    top: 50%;\n    left: 50%;\n    background: var(--needle-color);\n    border-radius: 50%;\n    transform: translate(-50%, -50%);\n    box-shadow: 0 1px 4px #0000009c;\n}\n.g-val{\n    position: absolute;\n    text-align: center;\n    left: 50%;\n    bottom: 8%;\n    width: 80px;\n    transform: translateX(-50%);\n    font-family: monospace;\n    font-size:  calc(var(--container-size) * 40%);\n    color: #000000a1;\n    filter: drop-shadow(2px 3px 2px #00000080);\n}\n.g-label{\n    position: absolute;\n    text-align: center;\n    left: 50%;\n    top: 55%;\n    width: 100%;\n    transform: translateX(-50%);\n    font-family: monospace;\n    font-size:  calc(var(--container-size) * 18%);\n    color: #000000a1;\n    filter: drop-shadow(2px 3px 2px #00000080);\n}\n.g-rivets{\n    position: absolute;\n    left:0;\n    top:0;\n    width: 100%;\n    height: 100%;\n}\n\n.g-rivet {\n    position: absolute;\n    width: calc(var(--container-size) * 2px);\n    height: calc(var(--container-size) * 2px);\n    border-radius: 50px;\n    background: linear-gradient(135deg, #adadad 0%,#d3d3d3 51%,#d1d1d1 68%,#8c8c8c 100%);\n    box-shadow: 0px 2px 4px #000, -1px -1px 5px rgba(0,0,0,0.2);\n    border: 1px solid rgba(255,255,255,0.1);\n}\n.g-rivet:nth-child(1){\n    top:calc(var(--container-size) * 1.5px);\n    left:calc(var(--container-size) * 1.5px);\n}\n.g-rivet:nth-child(2){\n    top:calc(var(--container-size) * 1.5px);\n    right:calc(var(--container-size) * 1.5px);\n}\n.g-rivet:nth-child(3){\n    bottom:calc(var(--container-size) * 1.5px);\n    left:calc(var(--container-size) * 1.5px);\n}\n.g-rivet:nth-child(4){\n    bottom:calc(var(--container-size) * 1.5px);\n    right:calc(var(--container-size) * 1.5px);\n}\n\n.g-rivet::before {\n    content: '';\n    position: absolute;\n    left: 50%;\n    top: 50%;\n    width: calc(var(--container-size) * 10%);\n    height: calc(var(--container-size) * 10%);\n    box-shadow: inset 0px 1px 2px #222;\n    transform: translate(-50%, -50%);\n    border-radius: 50%;\n    border-bottom: 1px solid rgba(255,255,255,0.3);\n}\n</style>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "global",
+        "className": "",
+        "x": 610,
+        "y": 280,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "eb080df2e58aef8a",
+        "type": "ui_template",
+        "z": "c84aa3ab78a20af4",
+        "group": "2c0d82c5cbab11fd",
+        "name": "gauge",
+        "order": 4,
+        "width": "6",
+        "height": "6",
+        "format": "<div id=\"{{'gauge_'+$id}}\" class=\"g-container\" style=\"-g-angle:0; --container-size:6\">\n    <div id=\"bgr\" class=\"g-body\">\n        <div class=\"g-ring\">\n            <div class=\"g-rivets\">\n                <div class=g-rivet></div>\n                <div class=g-rivet></div>\n                <div class=g-rivet></div>\n                <div class=g-rivet></div>\n            </div>\n            <div class=\"g-plate\">\n                <div class=\"g-sector g-sector-normal\" style=\"transform: rotate(193deg) skew(291deg, 23deg);\"></div>\n                <div class=\"g-sector g-sector-high\" style=\"transform: rotate(329deg) skew(12deg,23deg);\"></div>\n                <div class=\"g-ticks\">\n                    <div class=\"g-tick\" style=\"--ga-tick:1;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:2;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:3;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:4;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:5;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:6;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:7;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:8;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:9;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:10;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:11;\"></div>\n                </div>\n                <div class=\"g-nums\">\n                    <div class=\"g-num\" style=\"left: 23%;top: 71%;\">0</div>\n                    <div class=\"g-num\" style=\"left: 13%;top: 56%;\">10</div>\n                    <div class=\"g-num\" style=\"left: 13%;top: 39%;\">20</div>\n                    <div class=\"g-num\" style=\"left: 19%;top: 24%;\">30</div>\n                    <div class=\"g-num\" style=\"left: 31%;top: 14%;\">40</div>\n                    <div class=\"g-num\" style=\"left: 47%;top: 10%;\">50</div>\n                    <div class=\"g-num\" style=\"left: 63%;top: 14%;\">60</div>\n                    <div class=\"g-num\" style=\"left: 74%;top: 25%;\">70</div>\n                    <div class=\"g-num\" style=\"left: 79%;top: 40%;\">80</div>\n                    <div class=\"g-num\" style=\"left: 78%;top: 56%;\">90</div>\n                    <div class=\"g-num\" style=\"left:65%; top:71%;\">100</div>\n                </div>\n                <div class=\"g-label\">Temperature</div>\n                <div class=\"g-needle\"></div>\n                <div class=\"g-needle-ring\"></div>\n                <div id=\"{{'gauge_val_'+$id}}\" class=\"g-val\"></div>\n            </div>\n        </div>\n    </div>\n</div>\n<script>\n(function(scope) {\n    let min = 0;\n    let max = 100;\n    scope.$watch('msg', function(msg) {\n        if (msg) {\n            const v = Math.floor(((msg.payload - min) / (max - min)) * 100);\n            document.getElementById('gauge_'+scope.$id).style.setProperty('--g-angle', v);\n            document.getElementById('gauge_val_'+scope.$id).innerText = msg.payload;\n        }   \n  });\n})(scope);\n</script>\n",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 590,
+        "y": 440,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "2894c6d23426d14e",
+        "type": "ui_slider",
+        "z": "c84aa3ab78a20af4",
+        "name": "",
+        "label": "slider",
+        "tooltip": "",
+        "group": "2c0d82c5cbab11fd",
+        "order": 6,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "outs": "all",
+        "topic": "topic",
+        "topicType": "msg",
+        "min": 0,
+        "max": "100",
+        "step": 1,
+        "x": 430,
+        "y": 480,
+        "wires": [
+            [
+                "eb080df2e58aef8a"
+            ]
+        ]
+    },
+    {
+        "id": "83600c0b876a7095",
+        "type": "ui_template",
+        "z": "c84aa3ab78a20af4",
+        "group": "3ca910b5.3d50a",
+        "name": "gauge",
+        "order": 4,
+        "width": "3",
+        "height": "3",
+        "format": "<div id=\"{{'gauge_'+$id}}\" class=\"g-container\" style=\"--g-angle:0; --container-size:3\">\n    <div id=\"bgr\" class=\"g-body\">\n        <div class=\"g-ring\">\n            <div class=\"g-plate\">\n                <div class=\"g-ticks\">\n                    <div class=\"g-tick\" style=\"--ga-tick:1;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:2;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:3;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:4;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:5;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:6;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:7;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:8;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:9;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:10;\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:11;\"></div>\n\n                </div>\n                <div class=\"g-nums\">\n                    <div class=\"g-num\" style=\"left:24%; top:70%;\">0</div>\n                    <div class=\"g-num\" style=\"left:20%; top:26%;\">30</div>\n                    <div class=\"g-num\" style=\"left:47%; top:11%;\">50</div>\n                    <div class=\"g-num\" style=\"left:74%; top:26%;\">70</div>\n                    <div class=\"g-num\" style=\"left:65%; top:71%;\">100</div>\n                </div>\n                <div class=\"g-label\">Temperature</div>\n                <div class=\"g-needle\"></div>\n                <div class=\"g-needle-ring\"></div>\n                <div id=\"{{'gauge_val_'+$id}}\" class=\"g-val\"></div>\n            </div>\n        </div>\n    </div>\n</div>\n<script>\n    (function(scope) {\n    let min = 0;\n    let max = 100;\n    scope.$watch('msg', function(msg) {\n        if (msg) {\n            const v = Math.floor(((msg.payload - min) / (max - min)) * 100);\n            document.getElementById('gauge_'+scope.$id).style.setProperty('--g-angle', v);\n            document.getElementById('gauge_val_'+scope.$id).innerText = msg.payload;\n        }   \n  });\n})(scope);\n</script>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "x": 590,
+        "y": 360,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "afaff92e3a332214",
+        "type": "ui_template",
+        "z": "c84aa3ab78a20af4",
+        "group": "d7e8ab4ae6aaf9bf",
+        "name": "gauge -30 / 30",
+        "order": 4,
+        "width": "6",
+        "height": "6",
+        "format": "<div id=\"{{'gauge_'+$id}}\" class=\"g-container\" style=\"-g-angle:0; --container-size:6\">\n    <div id=\"bgr\" class=\"g-body\">\n        <div class=\"g-ring\">\n            <div class=\"g-rivets\">\n                <div class=g-rivet></div>\n                <div class=g-rivet></div>\n                <div class=g-rivet></div>\n                <div class=g-rivet></div>\n            </div>\n            <div class=\"g-plate\">\n                \n                <div class=\"g-ticks\">\n                    <div class=\"g-tick\" style=\"--ga-tick:1; transform: rotate(calc(45deg * var(--ga-tick) - 88deg))\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:2; transform: rotate(calc(45deg * var(--ga-tick) - 88deg))\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:3; transform: rotate(calc(45deg * var(--ga-tick) - 88deg))\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:4; transform: rotate(calc(45deg * var(--ga-tick) - 88deg))\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:5; transform: rotate(calc(45deg * var(--ga-tick) - 88deg))\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:6; transform: rotate(calc(45deg * var(--ga-tick) - 88deg))\"></div>\n                    <div class=\"g-tick\" style=\"--ga-tick:7; transform: rotate(calc(45deg * var(--ga-tick) - 88deg))\"></div>\n                    \n                </div>\n                <div class=\"g-nums\">\n                    <div class=\"g-num\" style=\"left: 23%;top: 71%;\">-30</div>\n                    <div class=\"g-num\" style=\"left: 13%;top: 44%;\">-20</div>\n                    <div class=\"g-num\" style=\"left: 23%;top: 21%;\">-10</div>\n                    <div class=\"g-num\" style=\"left: 49%;top: 11%;\">0</div>\n                    <div class=\"g-num\" style=\"left: 71%;top: 21%;\">10</div>\n                    <div class=\"g-num\" style=\"left: 79%;top: 46%;\">20</div>\n                    <div class=\"g-num\" style=\"left:65%; top:71%;\">30</div>\n                </div>\n                <div class=\"g-label\">Temperature</div>\n                <div class=\"g-needle\"></div>\n                <div class=\"g-needle-ring\"></div>\n                <div id=\"{{'gauge_val_'+$id}}\" class=\"g-val\"></div>\n            </div>\n        </div>\n    </div>\n</div>\n<script>\n(function(scope) {\n    let min = -30;\n    let max = 30;\n    scope.$watch('msg', function(msg) {\n        if (msg) {\n            const v = Math.floor(((msg.payload - min) / (max - min)) * 100);\n            document.getElementById('gauge_'+scope.$id).style.setProperty('--g-angle', v);\n            document.getElementById('gauge_val_'+scope.$id).innerText = msg.payload;\n        }   \n  });\n})(scope);\n</script>\n",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 620,
+        "y": 600,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "4a82951331f37cf3",
+        "type": "ui_slider",
+        "z": "c84aa3ab78a20af4",
+        "name": "",
+        "label": "slider",
+        "tooltip": "",
+        "group": "d7e8ab4ae6aaf9bf",
+        "order": 6,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "outs": "all",
+        "topic": "topic",
+        "topicType": "msg",
+        "min": "-30",
+        "max": "30",
+        "step": 1,
+        "className": "",
+        "x": 430,
+        "y": 600,
+        "wires": [
+            [
+                "afaff92e3a332214"
+            ]
+        ]
+    },
+    {
+        "id": "77202a2c1dea74ec",
+        "type": "random",
+        "z": "c84aa3ab78a20af4",
+        "name": "",
+        "low": 1,
+        "high": "100",
+        "inte": "true",
+        "property": "payload",
+        "x": 440,
+        "y": 320,
+        "wires": [
+            [
+                "fd72c5cbed695966"
+            ]
+        ]
+    },
+    {
+        "id": "4726db59163e1b14",
+        "type": "random",
+        "z": "c84aa3ab78a20af4",
+        "name": "",
+        "low": 1,
+        "high": "100",
+        "inte": "true",
+        "property": "payload",
+        "x": 440,
+        "y": 400,
+        "wires": [
+            [
+                "9aa3095c7d603553"
+            ]
+        ]
+    },
+    {
+        "id": "dcd7d89bb2be17bf",
+        "type": "random",
+        "z": "c84aa3ab78a20af4",
+        "name": "",
+        "low": 1,
+        "high": "100",
+        "inte": "true",
+        "property": "payload",
+        "x": 440,
+        "y": 440,
+        "wires": [
+            [
+                "eb080df2e58aef8a"
+            ]
+        ]
+    },
+    {
+        "id": "621f5130273563c7",
+        "type": "random",
+        "z": "c84aa3ab78a20af4",
+        "name": "",
+        "low": 1,
+        "high": "100",
+        "inte": "true",
+        "property": "payload",
+        "x": 440,
+        "y": 360,
+        "wires": [
+            [
+                "83600c0b876a7095"
+            ]
+        ]
+    }
+]
