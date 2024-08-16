@@ -189,9 +189,9 @@ class ClassChannelSensor {
     }
 
     Init({ SystemBus }) {
-        SystemBus.on(`${this.ID}-raw`, (val) => {
-            // TODO: выполнить чтение из БД 
-            // this.Value = ProxyDB.ReadChValue(this.ID);
+        this.#_SystemBus = SystemBus;
+
+        this.#_SystemBus.on(`${this.ID}-raw`, (val) => {
             this.Value = val;
         });
     }
