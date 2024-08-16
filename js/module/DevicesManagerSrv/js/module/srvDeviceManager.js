@@ -27,9 +27,9 @@ module.exports = (dependencies) => {
         #_ReqSent = 0;
         #_ResReceived = 0;                    
 
-        constructor() {
+        constructor() { }
 
-        }
+        get Name() { return 'DeviceManager'; }
 
         get SensorChannels() {
             return this.#_Channels.filter(ch => ch instanceof ClassChannelSensor);
@@ -47,18 +47,29 @@ module.exports = (dependencies) => {
             return list;
         }
 
-        Run({ SystemBus }) {
+        Init({ SystemBus, SourcesInfo }) {
             this.#_SystemBus = SystemBus;
+            this.#_SourcesInfo = SourcesInfo;
+
+            this.#OnSourcesInfo();
+
             // получена информация о списке каналов с одного источника  
-            this.#_SystemBus.on(EVENT_DM_LIST_GET, (info, sourceName) => this.#OnDevListGet(info, sourceName));
+            this.#_SystemBus.on(EVENT_DM_LIST_GET, (info, sourceName) => {
+                console.log(`DEBUG>> DM get list${info}`);
+                this.#OnDevListGet(info, sourceName);
+            });
             // Process передал список подключений, по которым будет выполнен запрос на получение списка каналов 
-            this.#_SystemBus.on(EVENT_CONNS_DONE, (sourcesInfo) => this.#OnSourcesInfo(sourcesInfo));
+            // this.#_SystemBus.on(EVENT_CONNS_DONE, (sourcesInfo) => {
+            //     console.log(`DEBUG>> DM get info${sourcesInfo}`);
+            //     this.#OnSourcesInfo(sourcesInfo);
+            // });
+            console.log(`DEBUG>> DM init finish`);
         }
 
         #OnDevListGet(info, sourceName) {
             this.#CreateChsFromList(info, sourceName);
             // соединение, с которого пришел ответ
-            const conn = this.#_SourcesInfo.Connections.find(conn => conn._sourceName == sourceName);
+            const conn = this.#_SourcesInfo._collection.find(conn => conn._sourceName == sourceName);
             conn._providedDeviceInfo = true;
             // подписка на показания каналов
             this.SubSensAll(conn._sourceName);
@@ -75,11 +86,11 @@ module.exports = (dependencies) => {
          * @param {object} sourcesInfo - информация о источниках/подключениях
          * @returns 
          */
-        #OnSourcesInfo(sourcesInfo) {
+        #OnSourcesInfo(/*sourcesInfo*/) {
             if (this.#_GetInfoTimeout) return;
-            this._SourcesInfo = sourcesInfo;
+            // this.#_SourcesInfo = sourcesInfo;
 
-            sourcesInfo.Connections
+            this.#_SourcesInfo._collection
                 .filter(conn => conn._isConnected && !conn._providedDeviceInfo)
                 .forEach(conn => {
                     this.GetChannelsInfo(conn);
@@ -87,7 +98,7 @@ module.exports = (dependencies) => {
             });
             
             // завершение ожидания по таймауту
-            this.#_GetInfoTimeout = setTimeout(this.ReadyCb, GET_INFO_TIMEOUT);
+            this.#_GetInfoTimeout = setTimeout(this.ReadyCb.bind(this), GET_INFO_TIMEOUT);
         };
 
         /** 
@@ -99,6 +110,7 @@ module.exports = (dependencies) => {
                 requests: this.#_ReqSent,
                 responses: this.#_ResReceived
             });
+            console.log(`DEBUG>> ${EVENT_DM_READY}, req: ${this.#_ReqSent} res: ${this.#_ResReceived}`);
             
             // Обновление кол-ва каналов от каждого подключения
             this.UpdateSourceInfoChCount();
@@ -236,14 +248,15 @@ module.exports = (dependencies) => {
          */
         GetChannelConfig(_id) {
             // TODO: обращение к БД
-            return ProxyDB.GetConfig(_id);
+            // ProxyDB.GetConfig(_id);
+            return { article: 'unknown' };
         }
         /**
          * @method
          * Обновляет кол-во каналов от каждого подключения
          */
         UpdateSourceInfoChCount() {
-            this.#_SourcesInfo.Connections.forEach(conn => {
+            this.#_SourcesInfo._collection.forEach(conn => {
                 conn._chCount = this.#_Channels.filter(ch => ch.SourceName === conn._sourceName).length;
             });
         }
