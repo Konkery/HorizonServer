@@ -1,7 +1,11 @@
+const { log } = require("console");
+
 const EVENT_WSC_RECEIVE = 'pwsc-receive';
-const EVENT_PWSC_SEND = 'pwsc-send';
 const EVENT_PWS_CREATED = 'pwsc-created';
-const EVENT_CONNS_DONE = 'proc-connections-done';
+const EVENT_CONNS_DONE  = 'proc-connections-done';
+const EVENT_WSC_MSG_RETURN  = 'wsc-msg-return';
+const EVENT_PWSC_MSG_RETURN = 'pwsc-msg-return';
+const EVENT_PWSC_SEND  = 'pwsc-send';
 
 const LHP = {
     /**
@@ -53,26 +57,44 @@ module.exports = () => {
  */
 class ProxyWSClient {
     #_SystemBus;
-
+    #_SourcesInfo;
     constructor(_opts = { saveRawData: false }) {
         this._SaveRawData = _opts.saveRawData; 
     }
 
-    Init({ SystemBus }) {
+    /**
+     * @getter
+     * @description Имя службы 
+     * @returns {string}
+     */
+    get Name() { return 'ProxyWSClient'; }
+
+    /**
+     * @typedef InitOpts
+     * @property {HrzBus} SystemBus
+     * @property {object} SourcesInfo
+     */
+    /**
+     * @method
+     * @description Сохраняет ссылки на используемые шины, информацию об источниках и инициализирует базовые обработчики
+     * @param {InitOpts} arg - объект со ссылками на внешние зависимости 
+     */
+    Init({ SystemBus, SourcesInfo }) {
+        this.#_SystemBus = SystemBus;
+        this.#_SourcesInfo = SourcesInfo;
+
         // Process передал список подключений, по которым будет выполнен запрос на получение списка каналов 
         this.#_SystemBus.on(EVENT_CONNS_DONE, (sourcesInfo) => {
-            this._SourcesInfo = sourcesInfo;
+            this.#_SourcesInfo = sourcesInfo;
         });
+
         /**
          * @event
          * Получение LHP пакета от WS клиента
          * @param {string} msg - JSON-строка
          * @param {string} sourceKey - первоначальный идентификатор соединения
          */
-        SystemBus.on(EVENT_WSC_RECEIVE, (msg, sourceKey) => {
-            const sourceName = this._SourcesInfo._collection.find(conn => conn._hKey == sourceKey)._sourceName;
-            this.#Receive(msg, sourceName);
-        });
+        this.#_SystemBus.on(EVENT_WSC_MSG_RETURN, this.#Receive.bind(this));
 
         /**
          * @event
@@ -80,13 +102,13 @@ class ProxyWSClient {
          * @param {object} command 
          * @param {string} sourceName - имя соединения
          */
-        SystemBus.on(EVENT_PWSC_SEND, (command, sourceName) => {
-            const sourceKey = this._SourcesInfo._collection.find(conn => conn._sourceName == sourceName)._hKey;
+        this.#_SystemBus.on(EVENT_PWSC_SEND, (command, sourceName) => {
             const msg = LHP.Pack(command);
-            this.#Send(msg, sourceKey);
+            this.#Send(msg, sourceName);
         });
 
-        SystemBus.emit(EVENT_PWS_CREATED, this);
+        this.#_SystemBus.emit(EVENT_PWS_CREATED, this);
+        console.log(`DEBUG>> Proxy init finish`);
     }
 
     /**
@@ -97,14 +119,14 @@ class ProxyWSClient {
      */
     #Receive(_data, _sourceId) {
         const { com, arg } = LHP.Unpack(_data);
+        console.log(`DEBUG>> com ${com} arg ${arg}`);
 
         if (com.endsWith('-raw')) {
-            SystemBus.emit(`${_sourceId}-${com}`, arg[0]);
-            if (this._SaveRawData) ProxyDB.WriteRaw({ id: com.slice(0, -4), value: arg[0] });
+            this.#_SystemBus.emit(`${_sourceId}-${com}`, arg[0]);
+            // if (this._SaveRawData) ProxyDB.WriteRaw({ id: com.slice(0, -4), value: arg[0] });
         } else {
-            SystemBus.emit(com, arg, _sourceId);
+            this.#_SystemBus.emit(com, arg, _sourceId);
         }
-
     }
     /**
      * @method
@@ -112,9 +134,10 @@ class ProxyWSClient {
      * @param {string} data сообщение 
      */
     #Send(msg, sourceKey) {
-
+        console.log(`DEBUG>> RECEIVE ${JSON.stringify(msg)} : ${sourceKey}`);
         // TODO: актуализировать интерфейс взаимодействия
-        // WSС.Send(JSON.stringify(msg), sourceKey);                            
+        this.#_SystemBus.emit(EVENT_PWSC_MSG_RETURN, JSON.stringify(msg), sourceKey);
+                          
     }
 }
 return ProxyWSClient;

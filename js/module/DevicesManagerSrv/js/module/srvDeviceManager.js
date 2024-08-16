@@ -28,13 +28,27 @@ module.exports = (dependencies) => {
         #_ResReceived = 0;                    
 
         constructor() { }
-
+        
+        /**
+         * @getter
+         * @description Имя службы 
+         * @returns {string}
+         */
         get Name() { return 'DeviceManager'; }
 
+        /**
+         * @getter
+         * @description Массив каналов
+         * @returns {[ClassChannelSensor]}
+         */
         get SensorChannels() {
             return this.#_Channels.filter(ch => ch instanceof ClassChannelSensor);
         }
-
+        /**
+         * @getter
+         * @description возвращает сводную таблицу инициализированных каналов
+         * @returns {[ClassChannelSensor]}
+         */
         get ChannelsList() {
             const list = {};
             this.SensorChannels.forEach(ch => {
@@ -46,7 +60,16 @@ module.exports = (dependencies) => {
             }, {});
             return list;
         }
-
+        /**
+         * @typedef InitOpts
+         * @property {HrzBus} SystemBus
+         * @property {object} SourcesInfo
+         */
+        /**
+         * @method
+         * @description Сохраняет ссылки на используемые шины, информацию об источниках и инициализирует базовые обработчики
+         * @param {InitOpts} arg - объект со ссылками на внешние зависимости 
+         */
         Init({ SystemBus, SourcesInfo }) {
             this.#_SystemBus = SystemBus;
             this.#_SourcesInfo = SourcesInfo;
@@ -66,6 +89,12 @@ module.exports = (dependencies) => {
             console.log(`DEBUG>> DM init finish`);
         }
 
+        /**
+         * @getter
+         * @description обрабатывает поступление списка каналов: инициализирует каналы, рассылает подписку на обновления данных с контроллера и оповещает об этом си
+         * @param {[string]} info - массив идентификаторов измерительных каналов в формате <article>-<sensId>-<sensCh>
+         * @param {string} sourceName - идентификатор источника данных
+         */
         #OnDevListGet(info, sourceName) {
             this.#CreateChsFromList(info, sourceName);
             // соединение, с которого пришел ответ
@@ -82,7 +111,7 @@ module.exports = (dependencies) => {
 
         /**
          * @method
-         * Сохраняет информацию о источниках. Инициирует запросы на получение списка каналов 
+         * @description Сохраняет информацию о источниках. Инициирует запросы на получение списка каналов 
          * @param {object} sourcesInfo - информация о источниках/подключениях
          * @returns 
          */
@@ -103,7 +132,7 @@ module.exports = (dependencies) => {
 
         /** 
          * @method
-         * Завершает ожидание 'devicelist-get' и оповещает о имеющихся результатах 
+         * @description Завершает ожидание 'devicelist-get' и оповещает о имеющихся результатах 
          */
         ReadyCb() {
             this.#_SystemBus.emit(EVENT_DM_READY, { 
@@ -124,7 +153,7 @@ module.exports = (dependencies) => {
 
         /**
          * @method
-         * Добавляет канал в реестр
+         * @description Добавляет канал в реестр
          * @param {Object} ch 
          */
         #AddChannel(ch) {
@@ -136,7 +165,7 @@ module.exports = (dependencies) => {
         /**
          * @method
          * @param {string} id 
-         * Возвращает устройство с соответствующим id
+         * @description Возвращает устройство с соответствующим id
          * @returns 
          */
         GetChannel(id) {
@@ -145,7 +174,7 @@ module.exports = (dependencies) => {
 
         /**
          * @method
-         * Создает объект ClassSensorInfo
+         * @description Создает объект ClassSensorInfo
          * @param {string} _article 
          * @returns {ClassSensorInfo}
          */
@@ -157,7 +186,7 @@ module.exports = (dependencies) => {
 
         /**
          * @method
-         * Обрабатывает поступление списка каналов с одного источника
+         * @description Обрабатывает поступление списка каналов с одного источника
          * @param {[String]} _infoStrings - массив строк формата <article>-<sens_id>-<ch_num>
          * @param {String} _sourceId - идентификатор источника
          */
@@ -177,7 +206,7 @@ module.exports = (dependencies) => {
 
         /**
          * @method
-         * Проверяет ID сенсора/актуатора и возвращает булевое значение, указывающее можно ли этот ID использовать.
+         * @description Проверяет ID сенсора/актуатора и возвращает булевое значение, указывающее можно ли этот ID использовать.
          * @param {string} _id 
          */
         IsIDUnique(_id) {
@@ -186,7 +215,7 @@ module.exports = (dependencies) => {
 
         /**
          * @method
-         * Инициализирует канал датчика
+         * @description Инициализирует канал датчика
          * @param {string} _sourceId - идентификатор источника (контроллера/виртуального датчика/брокера)
          * @param {string} _deviceID - идентификатор датчика на контроллере
          * @param {string} _chNum - номер канала датчика 
@@ -205,7 +234,7 @@ module.exports = (dependencies) => {
 
         /**
          * @method
-         * Отправляет запрос на получение списка каналов
+         * @description Отправляет запрос на получение списка каналов
          * @param {object} _connectionId - идентификатор подключения
          */
         GetChannelsInfo(_connection) {
@@ -217,7 +246,7 @@ module.exports = (dependencies) => {
 
         /**
          * @method
-         * Выполнение подписки на DM контроллера
+         * @description Выполнение подписки на DM контроллера
          * @param {object} _connection - идентификатор соединения
          */
         Sub(_connection) {
@@ -225,13 +254,18 @@ module.exports = (dependencies) => {
                 this.#_SystemBus.emit(EVENT_PWSC_SEND, { com: 'dm-sub', arg: [] }, _connection._sourceName);
         }
 
+        /**
+         * @method
+         * @description Отправляет подписку на обновление данных с контроллера по ws-соединению
+         * @param {string} _sourceName 
+         */
         SubSensAll(_sourceName) {
             this.#_SystemBus.emit(EVENT_PWSC_SEND, { com: COM_SUB_SENS_ALL, arg: [] }, _sourceName);
         }
 
         /**
          * @method
-         * Вызов метода сенсора или актуатора
+         * @description Вызов метода сенсора или актуатора
          * @param {string} _id 
          * @param {string} _methodName 
          * @param  {...any} args 
@@ -242,7 +276,7 @@ module.exports = (dependencies) => {
 
         /**
          * @method
-         * Возвращает конфиг канала
+         * @description Возвращает конфиг канала
          * @param {string} _id 
          * @returns 
          */
@@ -251,9 +285,10 @@ module.exports = (dependencies) => {
             // ProxyDB.GetConfig(_id);
             return { article: 'unknown' };
         }
+
         /**
          * @method
-         * Обновляет кол-во каналов от каждого подключения
+         * @description Обновляет кол-во каналов от каждого подключения
          */
         UpdateSourceInfoChCount() {
             this.#_SourcesInfo._collection.forEach(conn => {
