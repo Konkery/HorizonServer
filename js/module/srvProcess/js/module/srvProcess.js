@@ -11,7 +11,7 @@ class Connection {
         this._isConnected = isConnected;
         this._procMetaData = procMetaData;
         this._isSynced = isSynced;
-        this._flag4 = flag4;
+        this._flag4 = flag4;//
     }
 }
 
@@ -35,11 +35,11 @@ class Sources {
      */
     GetConnections() {// Заглушка
         let arr = [
-            {domain: "", source: "", type: "plc", ip: "192.168.50.151", port: "8080"},
-            {domain: "", source: "", type: "plc", ip: "192.168.50.156", port: "8080"},
-            {domain: "", source: "", type: "plc", ip: "192.168.50.157", port: "8080"},
-            {domain: "", source: "", type: "plc", ip: "192.168.50.161", port: "8080"},
-            {domain: "", source: "", type: "plc", ip: "192.168.50.162", port: "8080"},
+            {domain: "", source: "PLC11", type: "plc", ip: "192.168.50.151", port: "8080"},
+            {domain: "", source: "PLC21", type: "plc", ip: "192.168.50.156", port: "8080"},
+            {domain: "", source: "PLC22", type: "plc", ip: "192.168.50.157", port: "8080"},
+            {domain: "", source: "PLC31", type: "plc", ip: "192.168.50.161", port: "8080"},
+            {domain: "", source: "PLC32", type: "plc", ip: "192.168.50.162", port: "8080"},
         ];
         return arr;
     }
@@ -49,8 +49,15 @@ class Sources {
     SetConnectionFlagFalse(_cIndex) {
         this._collection[_cIndex]._isConnected = 0;
     }
+    GetConnectionKey(_cIndex) {
+        return this._collection[_cIndex]._hKey;
+    }
     SetConnectionKey(_cIndex, _sIndex) {
         this._collection[_cIndex]._hKey = _sIndex;
+    }
+    GetNameByKey(_key) {
+        let index = this._collection.findIndex((element) => element._hKey == _key);
+        return this._collection[index]._sourceName;
     }
 }
 
@@ -84,18 +91,21 @@ class ProcessSrv {
             });
             this._SystemBus.on('ws-addr-done', () => {
                 let arr = [];
-                this.#_SourcesInfo.Connection.forEach((connection) => {
+                this.#_SourcesInfo._collection.forEach((connection) => {
                     if (connection._isConnected == 1) {
-                        arr.push(connection._ipAddress)
+                        arr.push(connection._sourceName)
                     }
                 });
-                this._LoggerBus.emit('logInfo', "Connected to: ");
+                this._LoggerBus.emit('logInfo', "Connected to: " + arr);
                 // Генерация события для прокси на отправку запроса на имена и МАC-адреса
-                this._SystemBus.emit('proxy-meta-req');
+                /*let packet = {com: 'proc-get-systemdata', args: []};
+                arr.forEach((connect) => {
+                    this._SystemBus.emit('pwsc-send', packet, connect);
+                });*/
             });
-            this._SystemBus.on('proxy-meta-done', () => {
+            this._SystemBus.on('proc-return-systemdata', (ph) => {
                 this._LoggerBus.emit('logInfo', "Meta data updated!");
-                this._SystemBus.emit('proc-connections-done');
+                this._SystemBus.emit('proc-connections-done', this._SourcesInfo);
             });
         }
     }

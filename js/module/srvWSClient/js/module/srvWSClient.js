@@ -1,5 +1,5 @@
 module.exports = (dependenies) => {
-    const { Process, SystemBus, WebSocket, Logger } = dependenies;
+    const { WebSocket } = dependenies;
 
     class WebSocketClient {
           constructor() {
@@ -9,26 +9,54 @@ module.exports = (dependenies) => {
           } else {
               WebSocketClient.prototype.Instance = this;
           }
-          SystemBus.on('ws-addr-cast', () => {
-              this.Init();
-          })
+          this._SystemBus;
+          this._LoggerBus;
+          this._SourcesInfo;
           this._Sockets = [];
           this._connectionsToCheck;
           this._successConnections;
           this._failedConnections;
       }
+      Init(_SystemBus, _LoggerBus) {
+        this._SystemBus = _SystemBus;
+        this._LoggerBus = _LoggerBus;
+        this._SystemBus.on('ws-addr-cast', (_SourcesInfo) => {
+            this._SourcesInfo = _SourcesInfo;
+            this.Start();
+        });
+        this._SystemBus.on('pwsc-msg-return', (msg, sourceName) => {
+            let index = this._SourcesInfo._collection.findIndex((element) => element._sourceName == sourceName);
+
+            if (index != -1) {
+                let key = this._SourcesInfo.GetConnectionKey(index);
+                this._Sockets[key].send(msg);
+                this._LoggerBus.emit('logInfo', "Message sent to " + this._Sockets[key].url);
+            }
+            else {
+                this._LoggerBus.emit('logWarn', "Cannot find source " + sourceName);
+            }
+        });
+        this._SystemBus.on('close-all', () => {
+            for (let i = 0; i < this._Sockets.length; i++)
+            {
+                this._Sockets[i].close();
+            }
+            this._LoggerBus.emit('logInfo', "All sockets are closed");
+        });
+        this._LoggerBus.emit('logInfo', "WSClient initialized!");
+      }
       /**
        * @method
-       * Инициализирует соединение с источниками по вебсокетам
+       * @description Инициализирует соединение с источниками по вебсокетам
        */
-      Init() {
-          let aInfo = Process._SystemInfo;
+      Start() {
+          let sInfo = this._SourcesInfo._collection;
           this._connectionsToCheck = 0;
           this._successConnections = 0;
           this._failedConnections = 0;
           // Посчитать - сколько нужно проверить соединений
-          for (let i = 0; i < aInfo.Connection.length; i++) {
-              let info = aInfo.Connection[i];
+          for (let i = 0; i < sInfo.length; i++) {
+              let info = sInfo[i];
               if (info._isConnected) continue;// Коннект уже присутствует - пропускаем
               let name;
               if (info._domainName != '') {// Нет доменного имени - используем IP
@@ -41,8 +69,8 @@ module.exports = (dependenies) => {
               this._connectionsToCheck++;// Считаем сколько по итогу возможных соединений
           };
           // Создать сокеты для каждого коннекта и ждать
-          for (let i = 0; i < aInfo.Connection.length; i++) {
-              let info = aInfo.Connection[i];
+          for (let i = 0; i < sInfo.length; i++) {
+              let info = sInfo[i];
               if (info._isConnected) continue;// Коннект уже присутствует - пропускаем
               let name;
               if (info._domainName != '') {// Нет доменного имени - используем IP
@@ -57,32 +85,33 @@ module.exports = (dependenies) => {
 
               this._Sockets[i].addEventListener("open", (event) => {
                   this._successConnections++;
-                  Process.SetConnectionFlagTrue(i);
-                  Process.SetConnectionKey(i, i);
-                  Logger.Log(Logger.LogLevel.INFO, "Connected to " + this._Sockets[i].url);
+                  this._SourcesInfo.SetConnectionFlagTrue(i);
+                  this._SourcesInfo.SetConnectionKey(i, i);
+                  this._LoggerBus.emit('logInfo', "Connected to " + this._Sockets[i].url);
                   this.ConnectionDone();
               });
 
               this._Sockets[i].addEventListener("close", (event) => {
                   if (event.wasClean) {
-                    console.log('Соединение закрыто чисто');
+                    this._LoggerBus.emit('logInfo', "Disconnected.");
                   } else {
-                    //console.log('Обрыв соединения');
+                    //this._LoggerBus.emit('logWarn', "Unexpected disconnect.");
                   }
-                  Logger.Log(Logger.LogLevel.WARN, "Closed upon " + this._Sockets[i].url);
-                  //console.log('Код: ' + event.code + ' причина: ' + event.reason);
+                  //this._LoggerBus.emit('logWarn', "Closed upon " + this._Sockets[i].url + "(Code: " + event.code + ", reason: " + event.reason + ")");
+                  this._SourcesInfo.SetConnectionFlagFalse(i);
               });
               
               this._Sockets[i].addEventListener("message", (event) => {
-                  console.log("Получены данные " + event.data);
+                  let sourceName = this._SourcesInfo.GetNameByKey(i);
+                  this._SystemBus.emit("wsc-msg-return", event.data, sourceName)
+                  this._LoggerBus.emit('logInfo', "Got data from " + sourceName);
+                  this._LoggerBus.emit('logInfo', "Data: " + event.data);
               });
                 
               this._Sockets[i].addEventListener("error", (error) => {
                   this._failedConnections++;
-                  Process.SetConnectionFlagFalse(i);
-                  Logger.Log(Logger.LogLevel.WARN, "Error: " + error.message);
+                  this._LoggerBus.emit('logWarn', "Closed upon " + this._Sockets[i].url + "(Reason: " + error.message + ")");
                   this.ConnectionDone();
-                  //console.log("Ошибка " + error.message);
               });
           }
           this.ConnectionDone();
@@ -94,10 +123,10 @@ module.exports = (dependenies) => {
       ConnectionDone() {
           if (this._connectionsToCheck == (this._successConnections + this._failedConnections)) {
               if (this._failedConnections == this._connectionsToCheck) {// ни к кому не подключились
-                  SystemBus.emit('ws-addr-fail');
+                  this._SystemBus.emit('ws-addr-fail');
               }
               else {
-                  SystemBus.emit('ws-addr-done');
+                  this._SystemBus.emit('ws-addr-done');
               }              
           }
       }
