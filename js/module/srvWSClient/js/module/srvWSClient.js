@@ -9,41 +9,38 @@ module.exports = (dependenies) => {
           } else {
               WebSocketClient.prototype.Instance = this;
           }
-          this._SystemBus;
-          this._LoggerBus;
           this._SourcesInfo;
           this._Sockets = [];
           this._connectionsToCheck;
           this._successConnections;
           this._failedConnections;
       }
-      Init(_SystemBus, _LoggerBus) {
-        this._SystemBus = _SystemBus;
-        this._LoggerBus = _LoggerBus;
-        this._SystemBus.on('ws-addr-cast', (_SourcesInfo) => {
+      Init({_sysBus, _logBus, _ServicesState}) {
+        _sysBus.on('ws-addr-cast', (_SourcesInfo) => {
             this._SourcesInfo = _SourcesInfo;
             this.Start();
         });
-        this._SystemBus.on('pwsc-msg-return', (msg, sourceName) => {
+        _sysBus.on('pwsc-msg-return', (msg, sourceName) => {
             let index = this._SourcesInfo._collection.findIndex((element) => element._sourceName == sourceName);
 
             if (index != -1) {
                 let key = this._SourcesInfo.GetConnectionKey(index);
                 this._Sockets[key].send(msg);
-                this._LoggerBus.emit('logInfo', "Message sent to " + this._Sockets[key].url);
+                _logBus.emit('logInfo', "Message sent to " + this._Sockets[key].url);
             }
             else {
-                this._LoggerBus.emit('logWarn', "Cannot find source " + sourceName);
+                _logBus.emit('logWarn', "Cannot find source " + sourceName);
             }
         });
-        this._SystemBus.on('close-all', () => {
+        _sysBus.on('close-all', () => {
             for (let i = 0; i < this._Sockets.length; i++)
             {
                 this._Sockets[i].close();
             }
-            this._LoggerBus.emit('logInfo', "All sockets are closed");
+            _logBus.emit('logInfo', "All sockets are closed");
         });
-        this._LoggerBus.emit('logInfo', "WSClient initialized!");
+        _ServicesState.SetServiceObject('WSClient', this);
+        _logBus.emit('logInfo', "WSClient initialized!");
       }
       /**
        * @method

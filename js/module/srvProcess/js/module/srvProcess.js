@@ -1,4 +1,6 @@
-class Connection {
+const ClassBus = require('events').EventEmitter;
+
+class Source {
     constructor(domainName, sourceName, type, ipAddress, port, MAC, hKey, chCount, isConnected, procMetaData, isSynced, flag4) {
         this._domainName = domainName;
         this._sourceName = sourceName;
@@ -11,21 +13,19 @@ class Connection {
         this._isConnected = isConnected;
         this._procMetaData = procMetaData;
         this._isSynced = isSynced;
-        this._flag4 = flag4;//
     }
 }
 
 class Sources {
     constructor() {
         this._collection = [];
-        this.Init();
     }
-    Init() {
+    Init(_data) {
         let arr = this.GetConnections();
         let numServices = arr.length;
         
         for (let i = 0; i < numServices; i++) {
-            this._collection[i] = new Connection(arr[i].domain, arr[i].source, arr[i].type, arr[i].ip, arr[i].port, "", "", "", 0, 0, 0, 0);
+            this._collection[i] = new Source(arr[i].domain, arr[i].source, arr[i].type, arr[i].ip, arr[i].port, "", "", "", 0, 0, 0, 0);
         }
     }
     /**
@@ -61,8 +61,68 @@ class Sources {
     }
 }
 
+class Service {
+    constructor(name, importance) {
+        this._name = name;
+        this._importance = importance;
+    }
+    #_object;
+    get object() {
+        return this.#_object;
+    }
+
+    set object(_obj) {
+        this.#_object = _obj;
+    }
+}
+
+class Services {
+    constructor() {
+        this._collection = [];
+        this.SetServiceObject = this.SetServiceObject.bind(this);
+    }
+    Init(_data) {
+        let arr = this.GetServices();
+        let numServices = arr.length;
+        
+        for (let i = 0; i < numServices; i++) {
+            this._collection[i] = new Service(arr[i].name, arr[i].importance);
+        }
+    }
+    GetServices() {
+        let arr = [
+            {name: "Process", importance: "Critical"},
+            {name: "WSClient", importance: "Critical"},
+            {name: "Logger", importance: "Critical"},
+            {name: "SystemBus", importance: "Critical"},
+            {name: "LoggerBus", importance: "Critical"},
+            {name: "DeviceManager", importance: "Critical"},
+            {name: "ProxyWSClient", importance: "Critical"},
+        ];
+        return arr;
+    }
+    SetServiceObject(_name, _obj) {
+        let index = this._collection.findIndex((element) => element._name == _name);
+
+        if (index != -1) {
+            this._collection[index].object = _obj;
+        }
+    }
+    GetServiceObject(_name) {
+        let index = this._collection.findIndex((element) => element._name == _name);
+
+        if (index != -1) {
+            return this._collection[index].object;
+        }
+        else {
+            return undefined;
+        }
+    }
+}
+
 class ProcessSrv {
-    #_SourcesInfo;
+    #_SourcesState;
+    #_ServicesState;
 
     constructor() {
         //реализация паттерна синглтон
@@ -71,48 +131,56 @@ class ProcessSrv {
         } else {
             ProcessSrv.prototype.Instance = this;
         }
-        this._SystemBus;
-        this._LoggerBus;
+        this._sysBus;
+        this._logBus;
     }
     /**
      * @method
+     * @description
      * Инициализирует работу Process. Создаёт объект, описывающий подключения
      * и генерирует событие для клиентов на подключение к источникам
+     * @param {Object} _data    - данные из БД, переданные DBProvider
      */
-    Init(_SystemBus, _LoggerBus) {
+    Init(_data) {
         // Нет объекта - создать
-        if (typeof this.#_SourcesInfo === 'undefined') {
-            this.FormSysInfo();
+        if (typeof this.#_SourcesState === 'undefined') {
+            this.#_SourcesState = new Sources();
+            this.#_SourcesState.Init(_data);
 
-            this._SystemBus = _SystemBus;
-            this._LoggerBus = _LoggerBus;
-            this._SystemBus.on('ws-addr-fail', () => {
+            this.#_ServicesState = new Services();
+            this.#_ServicesState.Init(_data);
+            this.#_ServicesState.SetServiceObject("Process", this);
+
+            this._sysBus = new ClassBus();
+            this._logBus = new ClassBus();
+            this._sysBus.on('ws-addr-fail', () => {
                 this._LoggerBus.emit('logError', "Failed to connect to anyone via WebSocket!");
             });
-            this._SystemBus.on('ws-addr-done', () => {
+            this._sysBus.on('ws-addr-done', () => {
                 let arr = [];
-                this.#_SourcesInfo._collection.forEach((connection) => {
+                this.#_SourcesState._collection.forEach((connection) => {
                     if (connection._isConnected == 1) {
                         arr.push(connection._sourceName)
                     }
                 });
-                this._LoggerBus.emit('logInfo', "Connected to: " + arr);
+                this._logBus.emit('logInfo', "Connected to: " + arr);
                 // Генерация события для прокси на отправку запроса на имена и МАC-адреса
                 /*let packet = {com: 'proc-get-systemdata', args: []};
                 arr.forEach((connect) => {
                     this._SystemBus.emit('pwsc-send', packet, connect);
                 });*/
             });
-            this._SystemBus.on('proc-return-systemdata', (ph) => {
-                this._LoggerBus.emit('logInfo', "Meta data updated!");
-                this._SystemBus.emit('proc-connections-done', this._SourcesInfo);
+            this._sysBus.on('proc-return-systemdata', (ph) => {
+                this._logBus.emit('logInfo', "Meta data updated!");
+                this._sysBus.emit('proc-connections-done', this._SourcesState);
             });
         }
+        return { SourcesState: this._SourcesState, ServicesState: this._ServicesState, sysBus: this._sysBus, logBus: this._logBus };
     }
     Run() {
         // Генерация события для каждого клиента - сигнал, что объект с подключениями готов
         this.GetSourceClients().forEach(source => {
-            this._SystemBus.emit(source.genEvent, this._SourcesInfo);
+            this._SystemBus.emit(source.genEvent, this._SourcesState);
         });
     }
     /**
@@ -123,16 +191,12 @@ class ProcessSrv {
     GetSourceClients() {// Заглушка
         let sources = [{id: 0, name: "WebSocket", genEvent: "ws-addr-cast"}];
         return sources;
-    }        
-    /**
-     * @method
-     * Формирует объект подключений на основе данных из БД
-     */
-    FormSysInfo() {            
-        this.#_SourcesInfo = new Sources();
     }
-    get _SourcesInfo() {
-        return this.#_SourcesInfo;
+    get _SourcesState() {
+        return this.#_SourcesState;
+    }
+    get _ServicesState() {
+        return this.#_ServicesState;
     }
 }
 
