@@ -1,11 +1,19 @@
-const { log } = require("console");
-
-const EVENT_WSC_RECEIVE = 'pwsc-receive';
-const EVENT_PWS_CREATED = 'pwsc-created';
-const EVENT_CONNS_DONE  = 'proc-connections-done';
+const ClassBaseService_S = require('srvService');
+//const ClassBaseService_S = class {};
+const EVENT_INIT = 'all-init';
+const EVENT_REGISTER = 'register';
+const EVENT_WSC_RECEIVE     = 'pwsc-receive';
+const EVENT_PWS_CREATED     = 'pwsc-created';
+const EVENT_CONNS_DONE      = 'proc-connections-done';
 const EVENT_WSC_MSG_RETURN  = 'wsc-msg-return';
 const EVENT_PWSC_MSG_RETURN = 'pwsc-msg-return';
-const EVENT_PWSC_SEND  = 'pwsc-send';
+const EVENT_PWSC_SEND       = 'pwsc-send';
+
+/** Новые команды */
+const COM_PWSC_SEND = 'send';
+const COM_PWSC_RECEIVE = 'receive';
+
+const BUS_NAMES_LIST = ['sysBus', 'logBus', 'lhpBus'];
 
 const LHP = {
     /**
@@ -49,52 +57,27 @@ const LHP = {
     }
 }
 
-module.exports = () => { 
 /**
  * @class является придатком WS Client и реализует 
  * - передачу сообщений, полученных от WSC, системным службам  
  * - обработку запросов и сообщений со сторону служб 
  */
-class ProxyWSClient {
-    #_SystemBus;
-    #_SourcesInfo;
-    constructor(_opts = { saveRawData: false }) {
-        this._SaveRawData = _opts.saveRawData; 
-    }
-
+class ClassProxyWSClient extends ClassBaseService_S {
+    #_SourcesState;
     /**
-     * @getter
-     * @description Имя службы 
-     * @returns {string}
+     * @constructor
+     * @param {[ClassBus_S]} busList - список шин, созданных в проекте
      */
-    get Name() { return 'ProxyWSClient'; }
-
-    /**
-     * @typedef InitOpts
-     * @property {HrzBus} SystemBus
-     * @property {object} SourcesInfo
-     */
-    /**
-     * @method
-     * @description Сохраняет ссылки на используемые шины, информацию об источниках и инициализирует базовые обработчики
-     * @param {InitOpts} arg - объект со ссылками на внешние зависимости 
-     */
-    Init({ SystemBus, SourcesInfo }) {
-        this.#_SystemBus = SystemBus;
-        this.#_SourcesInfo = SourcesInfo;
-
-        // Process передал список подключений, по которым будет выполнен запрос на получение списка каналов 
-        this.#_SystemBus.on(EVENT_CONNS_DONE, (sourcesInfo) => {
-            this.#_SourcesInfo = sourcesInfo;
-        });
-
+    constructor({ busList, node }) {
+        // передача в супер-конструктор имени службы и списка требуемых шин
+        super({ name: 'ProxyWSClient', busNamesList: BUS_NAMES_LIST, busList, node });
         /**
          * @event
          * Получение LHP пакета от WS клиента
          * @param {string} msg - JSON-строка
          * @param {string} sourceKey - первоначальный идентификатор соединения
          */
-        this.#_SystemBus.on(EVENT_WSC_MSG_RETURN, this.#Receive.bind(this));
+        this._BusList.sysBus.on(EVENT_WSC_MSG_RETURN, this.#Receive.bind(this));
 
         /**
          * @event
@@ -102,13 +85,31 @@ class ProxyWSClient {
          * @param {object} command 
          * @param {string} sourceName - имя соединения
          */
-        this.#_SystemBus.on(EVENT_PWSC_SEND, (command, sourceName) => {
+        this._BusList.sysBus.on(EVENT_PWSC_SEND, (command, sourceName) => {
+            console.log(`PWSC | ${EVENT_PWSC_SEND}    ${command}`);
             const msg = LHP.Pack(command);
-            this.#Send(msg, sourceName);
+            this.#SendOnWSC(msg, sourceName);
         });
+    }
 
-        this.#_SystemBus.emit(EVENT_PWS_CREATED, this);
-        console.log(`DEBUG>> Proxy init finish`);
+    /**
+     * @typedef InitOpts
+     * @property {HrzBus} sysBus
+     * @property {object} SourcesInfo
+     */
+    /**
+     * @method
+     * @description Сохраняет ссылки на используемые шины, информацию об источниках и инициализирует базовые обработчики
+     * @param {InitOpts} arg - объект со ссылками на внешние зависимости 
+     */
+    async HandlerInit1({ ServicesState, SourcesState }) {
+        super.HandlerInit1(arguments);
+        if (this._BusList.lhpBus) {
+            /* future ver
+            this.AddComHandler('lhpBus', COM_PWSC_RECEIVE, this.#Receive.bind(this));
+            this.AddComHandler('lhpBus', COM_PWSC_SEND, this.#SendOnWSC.bind(this));
+            */
+        }
     }
 
     /**
@@ -122,24 +123,30 @@ class ProxyWSClient {
         console.log(`DEBUG>> com ${com} arg ${arg}`);
 
         if (com.endsWith('-raw')) {
-            this.#_SystemBus.emit(`${_sourceId}-${com}`, arg[0]);
-            // if (this._SaveRawData) ProxyDB.WriteRaw({ id: com.slice(0, -4), value: arg[0] });
+            this._BusList.sysBus.emit(`${_sourceId}-${com}`, arg[0]);
         } else {
-            this.#_SystemBus.emit(com, arg, _sourceId);
+            this._BusList.sysBus.emit(com, arg, _sourceId);
+            // this.SendMsg('lhpBus', { payload: { com, arg, source: _sourceId }});
         }
     }
+
     /**
      * @method
      * Отправляет сообщение в виде JSON-строки на WS Client
      * @param {string} data сообщение 
      */
-    #Send(msg, sourceKey) {
-        console.log(`DEBUG>> RECEIVE ${JSON.stringify(msg)} : ${sourceKey}`);
+    #SendOnWSC(msg, sourceName) {
         // TODO: актуализировать интерфейс взаимодействия
-        this.#_SystemBus.emit(EVENT_PWSC_MSG_RETURN, JSON.stringify(msg), sourceKey);
-                          
+        this._BusList.sysBus.emit(EVENT_PWSC_MSG_RETURN, JSON.stringify(msg), sourceName);
+        /**future ver 
+        // this.SendMsg('lhpBus', { topic: EVENT_PWSC_MSG_RETURN, payload: {
+        //     com: EVENT_PWSC_MSG_RETURN,
+        //     arg: [sourceName],
+        //     val: [JSON.stringify(msg)]
+        // }});   
+        */               
     }
 }
-return ProxyWSClient;
 
-}
+module.exports = ClassProxyWSClient;
+
