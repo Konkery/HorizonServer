@@ -1,89 +1,236 @@
 [
     {
-        "id": "473187a01c4e96dd",
-        "type": "tab",
-        "label": "Process",
-        "disabled": true,
-        "info": "",
-        "env": []
-    },
-    {
         "id": "55950d16b2398bc5",
         "type": "tab",
-        "label": "Process2",
+        "label": "Horizon",
         "disabled": false,
         "info": "",
         "env": []
     },
     {
-        "id": "a6e95fb8d2f0df5a",
+        "id": "2146bbb392e71178",
         "type": "tab",
-        "label": "Logger",
+        "label": "TEST1",
         "disabled": false,
         "info": "",
         "env": []
     },
     {
-        "id": "c1ae0d6036872b5d",
+        "id": "b2866b94d506fee3",
         "type": "tab",
-        "label": "WSClient",
+        "label": "Поток 1",
         "disabled": false,
         "info": "",
         "env": []
     },
     {
-        "id": "ab051b8805ace00b",
-        "type": "inject",
-        "z": "473187a01c4e96dd",
-        "name": "Run",
-        "props": [
-            {
-                "p": "payload"
-            },
-            {
-                "p": "topic",
-                "vt": "str"
-            }
+        "id": "07f4702e7e5f5c11",
+        "type": "group",
+        "z": "55950d16b2398bc5",
+        "name": "Process",
+        "style": {
+            "stroke": "#ffC000",
+            "fill": "#92d04f",
+            "fill-opacity": "0.65",
+            "label": true,
+            "color": "#000000"
+        },
+        "nodes": [
+            "6ac3a41adf3f730c",
+            "a070507dcbbbaf09",
+            "43c8114a882e30d2",
+            "b81f724fb89dadc2",
+            "b19260e99590ebd7"
         ],
-        "repeat": "",
-        "crontab": "",
-        "once": false,
-        "onceDelay": 0.1,
-        "topic": "",
-        "payload": "1",
-        "payloadType": "num",
-        "x": 170,
-        "y": 240,
-        "wires": [
-            [
-                "f644f672e30cac70"
-            ]
-        ]
+        "x": 494,
+        "y": 59,
+        "w": 632,
+        "h": 142
     },
     {
-        "id": "f644f672e30cac70",
+        "id": "2e3090de4bfa9ed8",
+        "type": "group",
+        "z": "55950d16b2398bc5",
+        "name": "Logger",
+        "style": {
+            "stroke": "#ffC000",
+            "fill": "#92d04f",
+            "fill-opacity": "0.65",
+            "label": true,
+            "color": "#000000"
+        },
+        "nodes": [
+            "aa30fbe222e0ab35",
+            "a0204824c5bf1752",
+            "ed4c176e5ce73d6f"
+        ],
+        "x": 494,
+        "y": 219,
+        "w": 552,
+        "h": 82
+    },
+    {
+        "id": "feb85290a6bd9805",
+        "type": "group",
+        "z": "55950d16b2398bc5",
+        "name": "providerMDB",
+        "style": {
+            "stroke": "#ffC000",
+            "fill": "#92d04f",
+            "fill-opacity": "0.65",
+            "label": true,
+            "color": "#000000"
+        },
+        "nodes": [
+            "a561940ce489184e",
+            "579ef41d52996ded",
+            "338e160efa1acc9b"
+        ],
+        "x": 1144,
+        "y": 59,
+        "w": 442,
+        "h": 82
+    },
+    {
+        "id": "93dadc49d9e24268",
+        "type": "group",
+        "z": "55950d16b2398bc5",
+        "name": "WebSockets",
+        "style": {
+            "stroke": "#ffC000",
+            "fill": "#92d04f",
+            "fill-opacity": "0.65",
+            "label": true,
+            "color": "#000000"
+        },
+        "nodes": [
+            "9fd08d769e414bc6",
+            "aa3622d2fc89cffa",
+            "d027e927d83a1544",
+            "4054fb9eb17ac479",
+            "7735dd6c2184795d",
+            "364fb03f1dbdbe72"
+        ],
+        "x": 494,
+        "y": 319,
+        "w": 562,
+        "h": 122
+    },
+    {
+        "id": "2dc40a435156a5bb",
+        "type": "group",
+        "z": "55950d16b2398bc5",
+        "name": "DeviceManager",
+        "style": {
+            "stroke": "#ffC000",
+            "fill": "#92d04f",
+            "fill-opacity": "0.65",
+            "label": true,
+            "color": "#000000"
+        },
+        "nodes": [
+            "8fa5b3a07b273a67",
+            "8ac44a927186673a",
+            "9dd2f09f99dd28c4"
+        ],
+        "x": 494,
+        "y": 459,
+        "w": 612,
+        "h": 82
+    },
+    {
+        "id": "03c065b19751e54d",
+        "type": "group",
+        "z": "55950d16b2398bc5",
+        "name": "Deploy",
+        "style": {
+            "stroke": "#ffC000",
+            "label": true,
+            "color": "#000000",
+            "fill": "#ffff3f",
+            "fill-opacity": "0.65"
+        },
+        "nodes": [
+            "891430ab3f1072f9",
+            "b730f0fad2b6a43b",
+            "50d94a361c92de03",
+            "efd6fb4886dc92e4",
+            "d57f8edab21f990f",
+            "7b2668cd85ae53b0",
+            "a6814ee8d46db8ca",
+            "a71bb25a3cbe3f88"
+        ],
+        "x": 34,
+        "y": 59,
+        "w": 412,
+        "h": 242
+    },
+    {
+        "id": "c682c38d57b9e3a7",
+        "type": "group",
+        "z": "55950d16b2398bc5",
+        "name": "Connect",
+        "style": {
+            "stroke": "#ffC000",
+            "fill": "#ffff3f",
+            "fill-opacity": "0.65",
+            "label": true,
+            "color": "#000000"
+        },
+        "nodes": [
+            "f4862fa6da600679",
+            "4d5af4fb5c0749ac"
+        ],
+        "x": 34,
+        "y": 319,
+        "w": 412,
+        "h": 82
+    },
+    {
+        "id": "6ac3a41adf3f730c",
         "type": "function",
-        "z": "473187a01c4e96dd",
-        "name": "Init",
-        "func": "global.get('ProcessSrv').Init();\nreturn msg;",
+        "z": "55950d16b2398bc5",
+        "g": "07f4702e7e5f5c11",
+        "name": "serviceProcess",
+        "func": "if (msg.payload.destinations.includes('process') ||\n    msg.payload.destinations.includes('broadcast')) {\n// Нода отвечает за работу сервиса Process - разворачивает все необходимые модули при деплое, \n// а также начало работы по команде пользователя\n    switch (msg.payload.com) {\n        case \"start\":\n            {   // Создание объекта Process\n                const ClassProcessSrv = global.get('ClassProcessSrv');\n                const Process = new ClassProcessSrv();\n                let {sysBus, logBus, mdbBus, dataBus} = Process.Init();\n                const GlobalBusList = {\n                    'sysBus': sysBus,\n                    'logBus': logBus,\n                    'mdbBus': mdbBus,\n                    'dataBus': dataBus\n                }\n                flow.set(\"GlobalBusList\", GlobalBusList);\n                msg = { topic: 'process-init0', payload: { timestamp: 123, hash: 'erijhgiorej', value: 0, source: 'process', com: 'init0', arg: [], destinations: ['provideMDB']}};\n                node.send(msg);\n                flow.set('process', Process);                \n            }\n            break;\n        case \"run\": {// Команда клиентам -> подключение к источникам \n                flow.get('process').Run();\n            }\n            break;\n        case \"debug\": {// Дебаг - выводполей процесса\n                const Process = flow.get('process');\n                msg = { topic: 'process-debug', payload: { timestamp: 123, hash: 'erijhgiorej', value: 0, source: 'process', com: 'resp', arg: [Process._SourcesState, Process._ServicesState], destinations: ['debug']}};\n                node.send(msg);// ответ для дебага\n            }\n            break;\n        default:            \n    }\n}\n// Создание Process",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 350,
-        "y": 240,
+        "x": 780,
+        "y": 120,
         "wires": [
             [
-                "829d0eb16b38b129"
+                "a070507dcbbbaf09",
+                "b19260e99590ebd7"
             ]
         ]
     },
     {
-        "id": "806b8bec25e4bf26",
+        "id": "a070507dcbbbaf09",
+        "type": "debug",
+        "z": "55950d16b2398bc5",
+        "g": "07f4702e7e5f5c11",
+        "name": "debugProcess",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1000,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "891430ab3f1072f9",
         "type": "inject",
-        "z": "473187a01c4e96dd",
+        "z": "55950d16b2398bc5",
+        "g": "03c065b19751e54d",
         "name": "Deploy",
         "props": [
             {
@@ -98,303 +245,25 @@
         "crontab": "",
         "once": true,
         "onceDelay": 0.1,
-        "topic": "",
-        "payload": "iso",
-        "payloadType": "date",
-        "x": 160,
-        "y": 40,
-        "wires": [
-            [
-                "9f59ef66d79a10d8"
-            ]
-        ]
-    },
-    {
-        "id": "31ad73619ac0f194",
-        "type": "debug",
-        "z": "473187a01c4e96dd",
-        "name": "debug 4",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "payload",
-        "targetType": "msg",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 800,
-        "y": 240,
-        "wires": []
-    },
-    {
-        "id": "e3ba5b67b74d5ff6",
-        "type": "complete",
-        "z": "473187a01c4e96dd",
-        "name": "Inject",
-        "scope": [
-            "4dc820d52b7768b7"
-        ],
-        "uncaught": false,
-        "x": 650,
-        "y": 40,
-        "wires": [
-            [
-                "5b75167c6f0eac04"
-            ]
-        ]
-    },
-    {
-        "id": "5b75167c6f0eac04",
-        "type": "link out",
-        "z": "473187a01c4e96dd",
-        "name": "link out 1",
-        "mode": "link",
-        "links": [
-            "0d2147a55031e3e6"
-        ],
-        "x": 755,
-        "y": 40,
-        "wires": []
-    },
-    {
-        "id": "4dc820d52b7768b7",
-        "type": "function",
-        "z": "473187a01c4e96dd",
-        "name": "Process",
-        "func": "let state;\nconst Logger = global.get('Logger');\n// Создание Process\ntry {    \n    const SystemBus = global.get('SystemBus');\n    const ClassProcessSrv = global.get('ClassProcessSrv')({ SystemBus, Logger });\n    const ProcessSrv = new ClassProcessSrv();\n    global.set('ProcessSrv', ProcessSrv);\n\n    // TODO: Заменить на вызов логгера для вывода сообщения\n    state = 'Process startup successful';\n    Logger.Log(Logger.LogLevel.INFO, state);\n    msg = { 'payload': state };\n}\ncatch (e) {\n    Logger.Log(Logger.LogLevel.ERROR, e);\n    throw e;\n}\n\nreturn msg;",
-        "outputs": 1,
-        "timeout": 0,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 320,
-        "y": 160,
-        "wires": [
-            [
-                "17e313d70ccbe891"
-            ]
-        ]
-    },
-    {
-        "id": "17e313d70ccbe891",
-        "type": "debug",
-        "z": "473187a01c4e96dd",
-        "name": "debug 3",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "payload",
-        "targetType": "msg",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 480,
-        "y": 160,
-        "wires": []
-    },
-    {
-        "id": "a3bba4b203c9edb6",
-        "type": "delay",
-        "z": "473187a01c4e96dd",
-        "name": "",
-        "pauseType": "delay",
-        "timeout": "15",
-        "timeoutUnits": "seconds",
-        "rate": "1",
-        "nbRateUnits": "1",
-        "rateUnits": "second",
-        "randomFirst": "1",
-        "randomLast": "5",
-        "randomUnits": "seconds",
-        "drop": false,
-        "allowrate": false,
-        "outputs": 1,
-        "x": 540,
-        "y": 340,
-        "wires": [
-            [
-                "829d0eb16b38b129"
-            ]
-        ]
-    },
-    {
-        "id": "829d0eb16b38b129",
-        "type": "function",
-        "z": "473187a01c4e96dd",
-        "name": "ReturnConnections",
-        "func": "msg = {'payload': global.get('ProcessSrv')._SystemInfo};\nreturn msg;",
-        "outputs": 1,
-        "timeout": 0,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 550,
-        "y": 240,
-        "wires": [
-            [
-                "31ad73619ac0f194",
-                "a3bba4b203c9edb6"
-            ]
-        ]
-    },
-    {
-        "id": "f97073ad1e8f4a75",
-        "type": "function",
-        "z": "473187a01c4e96dd",
-        "name": "SystemBus",
-        "func": "// Создание объекта системной шины\nconst Logger = global.get('Logger');\nlet state;\ntry {\n    const ClassSystemBus = global.get('events').EventEmitter;\n    const SystemBus = new ClassSystemBus();\n    global.set('SystemBus', SystemBus);\n\n    // TODO: Заменить на вызов логгера для вывода сообщения\n    state = 'SystemBus startup successful';\n    Logger.Log(Logger.LogLevel.INFO, state);\n    msg = { 'payload': state };\n}\ncatch (e) {\n    Logger.Log(Logger.LogLevel.ERROR, e);\n    throw e;\n}\nreturn msg;",
-        "outputs": 1,
-        "timeout": 0,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 330,
-        "y": 100,
-        "wires": [
-            [
-                "e6b58dd73f55c487",
-                "4dc820d52b7768b7"
-            ]
-        ]
-    },
-    {
-        "id": "e6b58dd73f55c487",
-        "type": "debug",
-        "z": "473187a01c4e96dd",
-        "name": "debug 1",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "payload",
-        "targetType": "msg",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 500,
-        "y": 100,
-        "wires": []
-    },
-    {
-        "id": "9f59ef66d79a10d8",
-        "type": "function",
-        "z": "473187a01c4e96dd",
-        "name": "Logger",
-        "func": "// Создание объекта системной шины\nlet state;\ntry {\n    const ClassLogger = global.get('ClassLogger');\n    const Logger = new ClassLogger();\n    global.set('Logger', Logger);\n\n    // TODO: Заменить на вызов логгера для вывода сообщения\n    state = 'Logger startup successful';\n    Logger.Log(Logger.LogLevel.INFO, state);\n    msg = { 'payload': state };\n}\ncatch (e) {\n    throw e;\n}\nreturn msg;",
-        "outputs": 1,
-        "timeout": 0,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 320,
-        "y": 40,
-        "wires": [
-            [
-                "7e9d4420ee408b50",
-                "f97073ad1e8f4a75"
-            ]
-        ]
-    },
-    {
-        "id": "7e9d4420ee408b50",
-        "type": "debug",
-        "z": "473187a01c4e96dd",
-        "name": "debug 2",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "payload",
-        "targetType": "msg",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 480,
-        "y": 40,
-        "wires": []
-    },
-    {
-        "id": "6ac3a41adf3f730c",
-        "type": "function",
-        "z": "55950d16b2398bc5",
-        "name": "serviceProcess",
-        "func": "// Нода отвечает за работу сервиса Process - разворачивает все необходимые модули при деплое, \n// а также начало работы по команде пользователя\nswitch (msg.payload) {\n    case \"Start\":\n        {   \n            // Создание объекта служб\n            const ClassServices = global.get('ClassServices');\n            const Services = new ClassServices();\n            Services.Init();\n            global.set('Services', Services);\n\n            // Создание системной шины и шины логгера\n            const ClassSystemBus = global.get('events').EventEmitter;\n            const SystemBus = new ClassSystemBus();\n            Services.SetServiceObject(\"SystemBus\", SystemBus);\n            const LoggerBus = new ClassSystemBus();\n            Services.SetServiceObject(\"LoggerBus\", LoggerBus);\n\n            // Создание объекта Process\n            const ClassProcessSrv = global.get('ClassProcessSrv');\n            const Process = new ClassProcessSrv();\n            Process.Init(SystemBus, LoggerBus);\n            Services.SetServiceObject(\"Process\", Process);\n\n            msg = {topic: 'Process-proceed',  payload: {com: 'proceed', arg: [], source: 'Process', destinations: ['Logger','WSClient', 'DM'], timestamp: 123, hash: 'erijhgiorej', value: 0}};\n            node.send(msg);\n\n            // Проверяем, что всё необходимое создано через 3 секунды\n            // TODO: вариант для отладки - доделать позже\n            setTimeout(() => {\n                let arr = [];\n                Services._collection.forEach((service) => {\n                    if (typeof service.object === 'undefined') {\n                        arr.push(service._name)\n                    }\n                });\n                msg = {'payload': arr};\n                node.send(msg);\n            }, 3000);\n        }\n        break;\n    default:\n        \n}\n// Создание Process\n\n",
-        "outputs": 1,
-        "timeout": 0,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 420,
+        "topic": "Init",
+        "payload": "{\"timestamp\":123,\"hash\":\"erijhgiorej\",\"value\":0,\"source\":\"Node-RED\",\"com\":\"start\",\"arg\":[],\"destinations\":[\"broadcast\"]}",
+        "payloadType": "json",
+        "x": 140,
         "y": 180,
         "wires": [
             [
-                "05edecb1af4bca6b",
-                "87f58f5ed4d9090c",
-                "13e8c38b863a6983",
-                "a070507dcbbbaf09"
+                "b730f0fad2b6a43b",
+                "50d94a361c92de03",
+                "efd6fb4886dc92e4"
             ]
         ]
     },
     {
-        "id": "05edecb1af4bca6b",
-        "type": "link out",
-        "z": "55950d16b2398bc5",
-        "name": "To Logger",
-        "mode": "link",
-        "links": [
-            "a0204824c5bf1752"
-        ],
-        "x": 625,
-        "y": 100,
-        "wires": []
-    },
-    {
-        "id": "87f58f5ed4d9090c",
-        "type": "link out",
-        "z": "55950d16b2398bc5",
-        "name": "link out 3",
-        "mode": "link",
-        "links": [],
-        "x": 625,
-        "y": 160,
-        "wires": []
-    },
-    {
-        "id": "13e8c38b863a6983",
-        "type": "link out",
-        "z": "55950d16b2398bc5",
-        "name": "link out 4",
-        "mode": "link",
-        "links": [],
-        "x": 625,
-        "y": 220,
-        "wires": []
-    },
-    {
-        "id": "a070507dcbbbaf09",
-        "type": "debug",
-        "z": "55950d16b2398bc5",
-        "name": "debug 5",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "true",
-        "targetType": "full",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 660,
-        "y": 280,
-        "wires": []
-    },
-    {
-        "id": "891430ab3f1072f9",
+        "id": "43c8114a882e30d2",
         "type": "inject",
         "z": "55950d16b2398bc5",
-        "name": "Init",
+        "g": "07f4702e7e5f5c11",
+        "name": "Debug",
         "props": [
             {
                 "p": "payload"
@@ -406,13 +275,13 @@
         ],
         "repeat": "",
         "crontab": "",
-        "once": true,
+        "once": false,
         "onceDelay": 0.1,
-        "topic": "Init",
-        "payload": "Start",
-        "payloadType": "str",
-        "x": 170,
-        "y": 120,
+        "topic": "Debug",
+        "payload": "{\"com\":\"debug\",\"arg\":[],\"source\":\"user\",\"destinations\":[\"process\"],\"timestamp\":123,\"hash\":\"erijhgiorej\",\"value\":0}",
+        "payloadType": "json",
+        "x": 590,
+        "y": 160,
         "wires": [
             [
                 "6ac3a41adf3f730c"
@@ -420,9 +289,511 @@
         ]
     },
     {
-        "id": "4798c39ec785a273",
+        "id": "b730f0fad2b6a43b",
+        "type": "link out",
+        "z": "55950d16b2398bc5",
+        "g": "03c065b19751e54d",
+        "name": "deploy to process",
+        "mode": "link",
+        "links": [
+            "b81f724fb89dadc2"
+        ],
+        "x": 405,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "50d94a361c92de03",
+        "type": "debug",
+        "z": "55950d16b2398bc5",
+        "g": "03c065b19751e54d",
+        "name": "debugDeploy",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 250,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "b81f724fb89dadc2",
+        "type": "link in",
+        "z": "55950d16b2398bc5",
+        "g": "07f4702e7e5f5c11",
+        "name": "into process",
+        "links": [
+            "b730f0fad2b6a43b",
+            "17b44545bcd64a7d",
+            "4d5af4fb5c0749ac"
+        ],
+        "x": 605,
+        "y": 100,
+        "wires": [
+            [
+                "6ac3a41adf3f730c"
+            ]
+        ]
+    },
+    {
+        "id": "a0204824c5bf1752",
+        "type": "link in",
+        "z": "55950d16b2398bc5",
+        "g": "2e3090de4bfa9ed8",
+        "name": "into logger",
+        "links": [
+            "05edecb1af4bca6b",
+            "c4a08b8f66cfa7d9",
+            "d57f8edab21f990f"
+        ],
+        "x": 535,
+        "y": 260,
+        "wires": [
+            [
+                "ed4c176e5ce73d6f"
+            ]
+        ]
+    },
+    {
+        "id": "ed4c176e5ce73d6f",
+        "type": "function",
+        "z": "55950d16b2398bc5",
+        "g": "2e3090de4bfa9ed8",
+        "name": "serviceLogger",
+        "func": "// Создание логгера\nif (msg.payload.destinations.includes('broadcast')) {\n    switch (msg.payload.com) {\n        case \"start\":\n            {// Получаем нужные шины и подписываемся на необходимые события\n                const ClassLogger = global.get('ClassLogger');\n                const Logger = new ClassLogger(flow.get('GlobalBusList').sysBus, flow.get('GlobalBusList').logBus);\n                msg = {'payload': 'Logger inited!'};\n                node.send(msg);// ответ для дебага\n            }        \n            break;\n        default:            \n    }\n}",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 700,
+        "y": 260,
+        "wires": [
+            [
+                "aa30fbe222e0ab35"
+            ]
+        ]
+    },
+    {
+        "id": "aa30fbe222e0ab35",
+        "type": "debug",
+        "z": "55950d16b2398bc5",
+        "g": "2e3090de4bfa9ed8",
+        "name": "debugLogger",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 930,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "a561940ce489184e",
+        "type": "link in",
+        "z": "55950d16b2398bc5",
+        "g": "feb85290a6bd9805",
+        "name": "into providerMDB",
+        "links": [
+            "b19260e99590ebd7"
+        ],
+        "x": 1185,
+        "y": 100,
+        "wires": [
+            [
+                "579ef41d52996ded"
+            ]
+        ]
+    },
+    {
+        "id": "579ef41d52996ded",
+        "type": "function",
+        "z": "55950d16b2398bc5",
+        "g": "feb85290a6bd9805",
+        "name": "providerMDB",
+        "func": "if (msg.payload.destinations.includes('provideMDB')) {\n    switch (msg.payload.com) {\n        case \"init0\":\n            {// Заглужка - ответ БД со списками\n                let arr1 = [\n                    { ID: 1, DNS: \"\", ExpectName: \"PLC11\", Type: \"plc\", IP: \"192.168.50.151\", Port: \"8080\", ChExpected: 64 },\n                    { ID: 2, DNS: \"\", ExpectName: \"PLC21\", Type: \"plc\", IP: \"192.168.50.156\", Port: \"8080\", ChExpected: 64 },\n                    { ID: 3, DNS: \"\", ExpectName: \"PLC22\", Type: \"plc\", IP: \"192.168.50.157\", Port: \"8080\", ChExpected: 64 },\n                    { ID: 4, DNS: \"\", ExpectName: \"PLC31\", Type: \"plc\", IP: \"192.168.50.161\", Port: \"8080\", ChExpected: 64 },\n                    { ID: 5, DNS: \"\", ExpectName: \"PLC32\", Type: \"plc\", IP: \"192.168.50.162\", Port: \"8080\", ChExpected: 64 },\n                ];\n                let arr2 = [\n                    { ServiceName: \"Process\", Importance: \"Critical\"},\n                    { ServiceName: \"WSClient\", Importance: \"Critical\"},\n                    { ServiceName: \"Logger\", Importance: \"Critical\"},\n                    { ServiceName: \"DeviceManager\", Importance: \"Critical\"},\n                    { ServiceName: \"ProxyWSClient\", Importance: \"Critical\"},\n                ];\n\n                if (true) { // Заглушка - если соединение установилось\n                    msg = {'payload': 'ProviderMDB inited!'};\n                }\n                else {\n                    msg = {'payload': 'ProviderMDB failed!'};\n                }\n                node.send(msg);// ответ для дебага\n            }\n            break;\n        default:            \n    }\n}",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1310,
+        "y": 100,
+        "wires": [
+            [
+                "338e160efa1acc9b"
+            ]
+        ]
+    },
+    {
+        "id": "338e160efa1acc9b",
+        "type": "debug",
+        "z": "55950d16b2398bc5",
+        "g": "feb85290a6bd9805",
+        "name": "MDBDebug",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1470,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "b19260e99590ebd7",
+        "type": "link out",
+        "z": "55950d16b2398bc5",
+        "g": "07f4702e7e5f5c11",
+        "name": "to providerMDB",
+        "mode": "link",
+        "links": [
+            "a561940ce489184e"
+        ],
+        "x": 945,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "9fd08d769e414bc6",
+        "type": "link in",
+        "z": "55950d16b2398bc5",
+        "g": "93dadc49d9e24268",
+        "name": "into WSClient",
+        "links": [
+            "87f58f5ed4d9090c",
+            "0aeef1d7355c7fd4",
+            "7b2668cd85ae53b0"
+        ],
+        "x": 535,
+        "y": 360,
+        "wires": [
+            [
+                "aa3622d2fc89cffa"
+            ]
+        ]
+    },
+    {
+        "id": "aa3622d2fc89cffa",
+        "type": "function",
+        "z": "55950d16b2398bc5",
+        "g": "93dadc49d9e24268",
+        "name": "serviceWSClient",
+        "func": "// Создание WebSocket клиента\nif (msg.payload.destinations.includes('broadcast')) {\n    switch (msg.payload.com) {\n        case \"start\":\n            {// Получение нужных шин и подписка к событиям                \n                const ClassWSClient = global.get('ClassWSClient');\n                const WSClient = new ClassWSClient(flow.get('GlobalBusList').sysBus, flow.get('GlobalBusList').logBus);\n                msg = {'payload': 'WSClient inited!'};\n\n                node.send(msg);// ответ для дебага\n            }        \n            break;\n        default:            \n    }\n}",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "// Добавленный здесь код будет исполняться при\n// остановке узла или повторном развертывании.\nglobal.get(\"sysBus\").emit('close-all');",
+        "libs": [],
+        "x": 690,
+        "y": 360,
+        "wires": [
+            [
+                "d027e927d83a1544"
+            ]
+        ]
+    },
+    {
+        "id": "d027e927d83a1544",
+        "type": "debug",
+        "z": "55950d16b2398bc5",
+        "g": "93dadc49d9e24268",
+        "name": "debugWSC",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 920,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "4054fb9eb17ac479",
+        "type": "function",
+        "z": "55950d16b2398bc5",
+        "g": "93dadc49d9e24268",
+        "name": "serviceProxyWSClient",
+        "func": "// Создание ProxyWS\nif (msg.payload.destinations.includes('broadcast')) {\n    switch (msg.payload.com) {\n        case \"start\":\n            {// Получение нужных шин и подписка к событиям\n                const ClassProxyWS = global.get('ClassProxyWS');\n                const ProxyWSClient = new ClassProxyWS(flow.get('GlobalBusList'));                \n                msg = {'payload': 'WSClient inited!'};\n                node.send(msg);// ответ для дебага\n            }        \n            break;\n        default:            \n    }\n}",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 710,
+        "y": 400,
+        "wires": [
+            [
+                "364fb03f1dbdbe72"
+            ]
+        ]
+    },
+    {
+        "id": "7735dd6c2184795d",
+        "type": "link in",
+        "z": "55950d16b2398bc5",
+        "g": "93dadc49d9e24268",
+        "name": "into ProxyWS",
+        "links": [
+            "b2a85f763086c94e",
+            "7fcc7ecd443a29db",
+            "a6814ee8d46db8ca"
+        ],
+        "x": 535,
+        "y": 400,
+        "wires": [
+            [
+                "4054fb9eb17ac479"
+            ]
+        ]
+    },
+    {
+        "id": "364fb03f1dbdbe72",
+        "type": "debug",
+        "z": "55950d16b2398bc5",
+        "g": "93dadc49d9e24268",
+        "name": "debugProxyWS",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 930,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "8fa5b3a07b273a67",
+        "type": "function",
+        "z": "55950d16b2398bc5",
+        "g": "2dc40a435156a5bb",
+        "name": "serviceDeviceManager",
+        "func": "// Создание DeviceManager\nif (msg.payload.destinations.includes('broadcast')) {\n    switch (msg.payload.com) {\n        case \"start\":\n            {\n                const ClassDeviceManager = global.get('ClassDeviceManager');\n                const DeviceManager = new ClassDeviceManager(flow.get('GlobalBusList'));\n                msg = {'payload': 'DeviceManager startup successful'};\n                node.send(msg);\n            }        \n            break;\n        default:            \n    }\n}",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "/*****************DEVICE MANAGER******************** */\ncontext.set('inited', false);\ncontext.set('created', false);\n",
+        "finalize": "",
+        "libs": [],
+        "x": 700,
+        "y": 500,
+        "wires": [
+            [
+                "9dd2f09f99dd28c4"
+            ]
+        ]
+    },
+    {
+        "id": "8ac44a927186673a",
+        "type": "link in",
+        "z": "55950d16b2398bc5",
+        "g": "2dc40a435156a5bb",
+        "name": "into DeviceManager",
+        "links": [
+            "13e8c38b863a6983",
+            "6208916367c4196f",
+            "a71bb25a3cbe3f88"
+        ],
+        "x": 535,
+        "y": 500,
+        "wires": [
+            [
+                "8fa5b3a07b273a67"
+            ]
+        ]
+    },
+    {
+        "id": "9dd2f09f99dd28c4",
+        "type": "debug",
+        "z": "55950d16b2398bc5",
+        "g": "2dc40a435156a5bb",
+        "name": "debugDeviceManager",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 960,
+        "y": 500,
+        "wires": []
+    },
+    {
+        "id": "efd6fb4886dc92e4",
+        "type": "delay",
+        "z": "55950d16b2398bc5",
+        "g": "03c065b19751e54d",
+        "name": "delay",
+        "pauseType": "delay",
+        "timeout": "100",
+        "timeoutUnits": "milliseconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 290,
+        "y": 200,
+        "wires": [
+            [
+                "d57f8edab21f990f",
+                "7b2668cd85ae53b0",
+                "a6814ee8d46db8ca",
+                "a71bb25a3cbe3f88"
+            ]
+        ]
+    },
+    {
+        "id": "d57f8edab21f990f",
+        "type": "link out",
+        "z": "55950d16b2398bc5",
+        "g": "03c065b19751e54d",
+        "name": "start to logger",
+        "mode": "link",
+        "links": [
+            "a0204824c5bf1752"
+        ],
+        "x": 405,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "7b2668cd85ae53b0",
+        "type": "link out",
+        "z": "55950d16b2398bc5",
+        "g": "03c065b19751e54d",
+        "name": "start to WSClient",
+        "mode": "link",
+        "links": [
+            "9fd08d769e414bc6"
+        ],
+        "x": 405,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "a6814ee8d46db8ca",
+        "type": "link out",
+        "z": "55950d16b2398bc5",
+        "g": "03c065b19751e54d",
+        "name": "start to ProxyWS",
+        "mode": "link",
+        "links": [
+            "7735dd6c2184795d"
+        ],
+        "x": 405,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "a71bb25a3cbe3f88",
+        "type": "link out",
+        "z": "55950d16b2398bc5",
+        "g": "03c065b19751e54d",
+        "name": "start to DM",
+        "mode": "link",
+        "links": [
+            "8ac44a927186673a"
+        ],
+        "x": 405,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "f4862fa6da600679",
         "type": "inject",
         "z": "55950d16b2398bc5",
+        "g": "c682c38d57b9e3a7",
+        "name": "Connect",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "start",
+        "payload": "{\"com\":\"run\",\"arg\":[],\"source\":\"user\",\"destinations\":[\"process\"],\"timestamp\":123,\"hash\":\"erijhgiorej\",\"value\":0}",
+        "payloadType": "json",
+        "x": 140,
+        "y": 360,
+        "wires": [
+            [
+                "4d5af4fb5c0749ac"
+            ]
+        ]
+    },
+    {
+        "id": "4d5af4fb5c0749ac",
+        "type": "link out",
+        "z": "55950d16b2398bc5",
+        "g": "c682c38d57b9e3a7",
+        "name": "connect to process",
+        "mode": "link",
+        "links": [
+            "b81f724fb89dadc2"
+        ],
+        "x": 405,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "4e92d5fde757c2e5",
+        "type": "function",
+        "z": "2146bbb392e71178",
+        "name": "emit 'proc-connections-done'",
+        "func": "const SystemBus = global.get('Services')._collection.find(s => s.Name == 'SystemBus');\nconst SourcesInfo = {\n    _collection: [\n        {\n            _sourceName: 'MCU1',\n            _hKey: '1111',\n            _isConnected: true\n        },\n        {\n            _sourceName: 'MCU2',\n            _hKey: '0000',\n            _isConnected: true,\n        }\n    ]\n};\n\nSystemBus.emit('proc-connections-done', SourcesInfo);\n\nmsg.payload = 'emit proc-connections-done';\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 560,
+        "y": 80,
+        "wires": [
+            [
+                "9c033ff90881edef"
+            ]
+        ]
+    },
+    {
+        "id": "53dcc2767cd0257a",
+        "type": "inject",
+        "z": "2146bbb392e71178",
         "name": "",
         "props": [
             {
@@ -440,105 +811,400 @@
         "topic": "",
         "payload": "",
         "payloadType": "date",
-        "x": 200,
-        "y": 240,
+        "x": 180,
+        "y": 80,
+        "wires": [
+            [
+                "4e92d5fde757c2e5"
+            ]
+        ]
+    },
+    {
+        "id": "9c033ff90881edef",
+        "type": "debug",
+        "z": "2146bbb392e71178",
+        "name": "debug 18",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 920,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "bfbcd211e83f53e1",
+        "type": "function",
+        "z": "2146bbb392e71178",
+        "name": "emit 'wsc-msg-return' MCU1",
+        "func": "const SystemBus = global.get('Services')._collection.find(s => s.Name == 'SystemBus');\n\nSystemBus.emit('wsc-msg-return', global.get('lhp1'), 'MCU1');\n\nmsg.payload = `${global.get('lhp1')} from user with hKey = 1111`;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "// Добавленный здесь код будет исполняться\n// однократно при развертывании узла.\nconst infoExample = [\n    'XX-00-00', 'XX-00-01', 'YY-01-00'\n];\nconst lhp = {\n    MetaData: {\n        RegServices: 'dm',\n        dm: { com: 'dm-deviceslist-get', arg: infoExample }\n    }\n}\n\nglobal.set('lhp1', JSON.stringify(lhp));\n\n/*\nsetTimeout(function() {\n    global.get('SystemBus').on('proc-connections-done', () => {\n        setTimeout(() => {\n            global.get('SystemBus').emit('pwsc-receive', global.get('lhp1'), '1111');\n        }, 20);\n    });\n}, 30);\n*/",
+        "finalize": "",
+        "libs": [],
+        "x": 560,
+        "y": 200,
+        "wires": [
+            [
+                "a0c965c4fbf4b74e"
+            ]
+        ]
+    },
+    {
+        "id": "de59a2ef939da5ac",
+        "type": "comment",
+        "z": "2146bbb392e71178",
+        "name": "Передача списка каналов",
+        "info": "",
+        "x": 530,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "2e904c7e87acdc95",
+        "type": "inject",
+        "z": "2146bbb392e71178",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 180,
+        "y": 220,
+        "wires": [
+            [
+                "bfbcd211e83f53e1",
+                "e484d1c1850517a7"
+            ]
+        ]
+    },
+    {
+        "id": "e484d1c1850517a7",
+        "type": "function",
+        "z": "2146bbb392e71178",
+        "name": "emit 'wsc-msg-return' MCU2",
+        "func": "const SystemBus = global.get('Services')._collection.find(s => s.Name == 'SystemBus');\n\n\nSystemBus.emit('wsc-msg-return', global.get('lhp2'), 'MCU2');\n\nmsg.payload = `${global.get('lhp2')} from user with hKey = 0000`;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "// Добавленный здесь код будет исполняться\n// однократно при развертывании узла.\n\nconst infoExample = [\n    'XX-00-00', 'ZZ-01-00'\n];\n\nconst lhp = {\n    MetaData: {\n        RegServices: 'dm',\n        dm: { com: 'dm-deviceslist-get', arg: infoExample }\n    }\n}\n\nglobal.set('lhp2', JSON.stringify(lhp));\n\n/*\nsetTimeout(function() {\n    global.get('SystemBus').on('proc-connections-done', () => {\n        setTimeout(() => {\n            global.get('SystemBus').emit('pwsc-receive', global.get('lhp2'), '0000');\n        }, 50);\n    });\n}, 50);\n*/",
+        "finalize": "",
+        "libs": [],
+        "x": 560,
+        "y": 260,
+        "wires": [
+            [
+                "a0c965c4fbf4b74e"
+            ]
+        ]
+    },
+    {
+        "id": "a0c965c4fbf4b74e",
+        "type": "debug",
+        "z": "2146bbb392e71178",
+        "name": "debug 16",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 880,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "f77d851d53eb9142",
+        "type": "function",
+        "z": "2146bbb392e71178",
+        "name": "emit 'MCU1-00-00-raw'",
+        "func": "// XX-00-00,XX-00-01,YY-00-00\nglobal.get('Services').GetServiceObject('SystemBus').emit('MCU1-00-00-raw', Math.random()*100);\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 540,
+        "y": 540,
         "wires": [
             []
         ]
     },
     {
-        "id": "a0204824c5bf1752",
-        "type": "link in",
-        "z": "a6e95fb8d2f0df5a",
-        "name": "from Process",
-        "links": [
-            "05edecb1af4bca6b"
-        ],
-        "x": 205,
-        "y": 80,
-        "wires": [
-            [
-                "ed4c176e5ce73d6f"
-            ]
-        ]
-    },
-    {
-        "id": "ed4c176e5ce73d6f",
+        "id": "ed53bc9ad830a3a1",
         "type": "function",
-        "z": "a6e95fb8d2f0df5a",
-        "name": "serviceLogger",
-        "func": "if (msg.topic = \"Process-proceed\") {\n    switch (msg.payload.com) {\n        case \"proceed\":\n            {\n                const ClassLogger = global.get('ClassLogger');\n                const Services = global.get('Services');\n                const Logger = new ClassLogger(Services.GetServiceObject('LoggerBus'));\n                Services.SetServiceObject('Logger', Logger);\n                msg = {'payload': 'Logger startup successful'};\n\n                node.send(msg);\n            }        \n            break;\n        default:            \n    }\n}\n",
+        "z": "2146bbb392e71178",
+        "name": "emit 'MCU1-00-01-raw'",
+        "func": "// XX-00-00,XX-00-01,YY-00-00\nglobal.get('Services').GetServiceObject('SystemBus').emit('MCU1-00-01-raw', Math.random()*100);\nreturn msg;",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 380,
-        "y": 80,
+        "x": 540,
+        "y": 600,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "03292d46f1e0e547",
+        "type": "function",
+        "z": "2146bbb392e71178",
+        "name": "emit 'MCU1-01-00-raw'",
+        "func": "global.get('Services').GetServiceObject('SystemBus').emit('MCU1-01-00-raw', Math.random()*100);\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 540,
+        "y": 660,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "e40136b08cedaff6",
+        "type": "inject",
+        "z": "2146bbb392e71178",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 160,
+        "y": 600,
         "wires": [
             [
-                "aa30fbe222e0ab35"
+                "f77d851d53eb9142",
+                "ed53bc9ad830a3a1",
+                "03292d46f1e0e547",
+                "ad23be797965a282",
+                "0b159b80ed9e476a"
             ]
         ]
     },
     {
-        "id": "aa30fbe222e0ab35",
-        "type": "debug",
-        "z": "a6e95fb8d2f0df5a",
-        "name": "debug 6",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "false",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 600,
-        "y": 80,
+        "id": "ad23be797965a282",
+        "type": "function",
+        "z": "2146bbb392e71178",
+        "name": "emit 'MCU2-00-00-raw'",
+        "func": "global.get('Services').GetServiceObject('SystemBus').emit('MCU2-00-00-raw', Math.random()*100);\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 540,
+        "y": 760,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "0b159b80ed9e476a",
+        "type": "function",
+        "z": "2146bbb392e71178",
+        "name": "emit 'MCU2-00-00-raw'",
+        "func": "global.get('Services').GetServiceObject('SystemBus').emit('MCU2-01-00-raw', Math.random()*100);\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 540,
+        "y": 820,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "e38c9667a0e0105c",
+        "type": "comment",
+        "z": "2146bbb392e71178",
+        "name": "Рассылка raw данных (LHP)",
+        "info": "",
+        "x": 540,
+        "y": 360,
         "wires": []
     },
     {
-        "id": "0d2147a55031e3e6",
-        "type": "link in",
-        "z": "c1ae0d6036872b5d",
-        "name": "link in 1",
-        "links": [
-            "5b75167c6f0eac04"
-        ],
-        "x": 165,
-        "y": 60,
-        "wires": [
-            [
-                "846a67e18bc17236"
-            ]
-        ]
-    },
-    {
-        "id": "846a67e18bc17236",
+        "id": "dbca84f44e6f7727",
         "type": "function",
-        "z": "c1ae0d6036872b5d",
-        "name": "CreateWSClient",
-        "func": "// Создание WebSocket клиента\nconst Logger = global.get('Logger');\nlet state;\ntry {\n    const Process = global.get('ProcessSrv');\n    const SystemBus = global.get('SystemBus');\n    const { WebSocket, WebSocketServer } = global.get('ws');\n    const ClassWSClient = global.get('ClassWSClient')({Process, SystemBus, WebSocket, Logger});\n    const WSClient = new ClassWSClient();\n    global.set('WSClient', WSClient);\n\n    state = 'WSClient startup successful';\n    // TODO: Заменить на вызов логгера для вывода сообщения\n    Logger.Log(Logger.LogLevel.INFO, state);\n}\ncatch (e) {\n    throw e;\n}\nmsg = {'payload': state};\nreturn msg;",
+        "z": "2146bbb392e71178",
+        "name": "show all ch values",
+        "func": "msg.payload = global.get('DeviceManager')\n    .SensorChannels\n    .filter(ch => ch.Value)\n    .map(ch => `${ch.ID}: ${(ch.Value).toFixed(2)}`)\n    .join('\\n');\n\nreturn msg;",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 320,
-        "y": 60,
+        "x": 550,
+        "y": 960,
         "wires": [
             [
-                "0e47eee3f551c089"
+                "7f07b975619dda25"
             ]
         ]
     },
     {
-        "id": "0e47eee3f551c089",
+        "id": "7f07b975619dda25",
         "type": "debug",
-        "z": "c1ae0d6036872b5d",
-        "name": "debug 4",
+        "z": "2146bbb392e71178",
+        "name": "debug 13",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 860,
+        "y": 960,
+        "wires": []
+    },
+    {
+        "id": "4a6e937f9bccb4d7",
+        "type": "inject",
+        "z": "2146bbb392e71178",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 220,
+        "y": 960,
+        "wires": [
+            [
+                "dbca84f44e6f7727"
+            ]
+        ]
+    },
+    {
+        "id": "335c0d071268d353",
+        "type": "comment",
+        "z": "2146bbb392e71178",
+        "name": "Вывод всех значений каналов",
+        "info": "",
+        "x": 550,
+        "y": 900,
+        "wires": []
+    },
+    {
+        "id": "18e22ad0cf1014d9",
+        "type": "function",
+        "z": "2146bbb392e71178",
+        "name": "emit 'wsc-msg-return' raw",
+        "func": "const SystemBus = global.get('Services').GetServiceObject('SystemBus');\n\nconst lhp = {\n    MetaData: {\n        RegServices: 'dm',\n        dm: { com: '00-00-raw', arg: [Math.random()*100] }\n    }\n}\nSystemBus.emit('wsc-msg-return', JSON.stringify(lhp), 'MCU1');\n\nmsg.payload = `JSON.stringify(lhp) from user with hKey = 1111`;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 550,
+        "y": 420,
+        "wires": [
+            [
+                "c86bf0c9d11bf36c"
+            ]
+        ]
+    },
+    {
+        "id": "8f98bbad70f232d7",
+        "type": "inject",
+        "z": "2146bbb392e71178",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 160,
+        "y": 420,
+        "wires": [
+            [
+                "18e22ad0cf1014d9"
+            ]
+        ]
+    },
+    {
+        "id": "a3e307020e30cc83",
+        "type": "comment",
+        "z": "2146bbb392e71178",
+        "name": "Рассылка raw данных (no LHP)",
+        "info": "",
+        "x": 550,
+        "y": 480,
+        "wires": []
+    },
+    {
+        "id": "c86bf0c9d11bf36c",
+        "type": "debug",
+        "z": "2146bbb392e71178",
+        "name": "debug 19",
         "active": true,
         "tosidebar": true,
         "console": false,
@@ -546,8 +1212,421 @@
         "complete": "false",
         "statusVal": "",
         "statusType": "auto",
+        "x": 860,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "c76f5574ebccb1dd",
+        "type": "inject",
+        "z": "2146bbb392e71178",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 220,
+        "y": 1060,
+        "wires": [
+            [
+                "6c94d052bec38e68"
+            ]
+        ]
+    },
+    {
+        "id": "6c94d052bec38e68",
+        "type": "function",
+        "z": "2146bbb392e71178",
+        "name": "function 3",
+        "func": "msg.payload = JSON.stringify(global.get('Services').GetServiceObject('DeviceManager')).ChannelsList;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
         "x": 520,
-        "y": 60,
+        "y": 1060,
+        "wires": [
+            [
+                "046132e6886e51f0"
+            ]
+        ]
+    },
+    {
+        "id": "046132e6886e51f0",
+        "type": "debug",
+        "z": "2146bbb392e71178",
+        "name": "debug 20",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 860,
+        "y": 1060,
         "wires": []
+    },
+    {
+        "id": "22d5344d100e4bfd",
+        "type": "comment",
+        "z": "2146bbb392e71178",
+        "name": "Вывод сводного списка каналов",
+        "info": "",
+        "x": 550,
+        "y": 1020,
+        "wires": []
+    },
+    {
+        "id": "a1b6b9874b9b5e3f",
+        "type": "inject",
+        "z": "2146bbb392e71178",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 220,
+        "y": 1160,
+        "wires": [
+            [
+                "eaad84e47451cd0b"
+            ]
+        ]
+    },
+    {
+        "id": "eaad84e47451cd0b",
+        "type": "function",
+        "z": "2146bbb392e71178",
+        "name": "function 4",
+        "func": "//msg.payload = JSON.stringify(global.get('Process').SystemInfo);\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 520,
+        "y": 1160,
+        "wires": [
+            [
+                "579fed28a316610f"
+            ]
+        ]
+    },
+    {
+        "id": "579fed28a316610f",
+        "type": "debug",
+        "z": "2146bbb392e71178",
+        "name": "debug 21",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 860,
+        "y": 1160,
+        "wires": []
+    },
+    {
+        "id": "6c0a8a30698e3c0b",
+        "type": "comment",
+        "z": "2146bbb392e71178",
+        "name": "Вывод информации о подключениях",
+        "info": "",
+        "x": 570,
+        "y": 1120,
+        "wires": []
+    },
+    {
+        "id": "f3fd597eb0396cb1",
+        "type": "inject",
+        "z": "2146bbb392e71178",
+        "name": "dm-info",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 1110,
+        "y": 160,
+        "wires": [
+            [
+                "d748117ea016cfb6"
+            ]
+        ]
+    },
+    {
+        "id": "d748117ea016cfb6",
+        "type": "function",
+        "z": "2146bbb392e71178",
+        "name": "emit 'dm-deviceslist-get'",
+        "func": "const SystemBus = global.get('Services').find(s => s.Name == 'SystemBus');\nconst infoExample = [\n    'XX-00-00', 'ZZ-01-00'\n];\nSystemBus.emit('dm-deviceslist-get', infoExample, 'MCU2');\n\nmsg.payload = infoExample;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1330,
+        "y": 160,
+        "wires": [
+            [
+                "0303e5092abb37f9"
+            ]
+        ]
+    },
+    {
+        "id": "0303e5092abb37f9",
+        "type": "debug",
+        "z": "2146bbb392e71178",
+        "name": "debug 17",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1560,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "0c04222be1ec06e5",
+        "type": "comment",
+        "z": "2146bbb392e71178",
+        "name": "Прямая передача dm-deviceslist-get",
+        "info": "",
+        "x": 1350,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "ea26eb1dca4a0c3b",
+        "type": "function",
+        "z": "b2866b94d506fee3",
+        "name": "pwsc-msg-return PLC21",
+        "func": "const SystemBus = global.get('Services').GetServiceObject('SystemBus');\n\nSystemBus.emit('pwsc-msg-return', 'HELLO', 'PLC21');\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 650,
+        "y": 180,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "67d6c47db7670195",
+        "type": "inject",
+        "z": "b2866b94d506fee3",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 380,
+        "y": 180,
+        "wires": [
+            [
+                "ea26eb1dca4a0c3b"
+            ]
+        ]
+    },
+    {
+        "id": "dde28e41fed5678b",
+        "type": "function",
+        "z": "b2866b94d506fee3",
+        "name": "function 5",
+        "func": "const SystemBus = global.get('Services').GetServiceObject('SystemBus');\nSystemBus.on('wsc-msg-return', (msg, name) => node.warn(`${msg}, ${name}`));\nSystemBus.on('proc-connections-done', info => node.warn(info));\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 340,
+        "y": 280,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "57f9d1bfff247b65",
+        "type": "inject",
+        "z": "b2866b94d506fee3",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 150,
+        "y": 280,
+        "wires": [
+            [
+                "dde28e41fed5678b"
+            ]
+        ]
+    },
+    {
+        "id": "9698ce82b6f4a475",
+        "type": "function",
+        "z": "b2866b94d506fee3",
+        "name": "pwsc-msg-return PLC31",
+        "func": "const SystemBus = global.get('Services').GetServiceObject('SystemBus');\n\nSystemBus.emit('pwsc-msg-return', 'HELLO', 'PLC31');\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 650,
+        "y": 100,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "31382a61de2fb0fc",
+        "type": "inject",
+        "z": "b2866b94d506fee3",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 380,
+        "y": 100,
+        "wires": [
+            [
+                "9698ce82b6f4a475"
+            ]
+        ]
+    },
+    {
+        "id": "d212d8a2b43fe4e9",
+        "type": "function",
+        "z": "b2866b94d506fee3",
+        "name": "pwsc-msg-return PLC32",
+        "func": "const SystemBus = global.get('Services').GetServiceObject('SystemBus');\n\nSystemBus.emit('pwsc-msg-return', 'HELLO', 'PLC32');\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 650,
+        "y": 40,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "a16117e16a900a25",
+        "type": "inject",
+        "z": "b2866b94d506fee3",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 380,
+        "y": 40,
+        "wires": [
+            [
+                "d212d8a2b43fe4e9"
+            ]
+        ]
     }
 ]

@@ -1,132 +1,113 @@
-module.exports = (dependenies) => {
-    const { WebSocket } = dependenies;
+const CONNECTION_TIMEOUT = 5000;
+const EVENT_INIT = 'init';
+const EVENT_CONNECT = 'connect';
+const SERVICE_NAME = 'WSClient';
 
-    class WebSocketClient {
-          constructor() {
-          //реализация паттерна синглтон
-          if (this.Instance) {
-              return this.Instance;
-          } else {
-              WebSocketClient.prototype.Instance = this;
-          }
-          this._SourcesInfo;
-          this._Sockets = [];
-          this._connectionsToCheck;
-          this._successConnections;
-          this._failedConnections;
-      }
-      Init({_sysBus, _logBus, _ServicesState}) {
-        _sysBus.on('ws-addr-cast', (_SourcesInfo) => {
-            this._SourcesInfo = _SourcesInfo;
+//const { WebSocket, WebSocketServer } = require('ws');
+
+class WebSocketClient {
+    constructor(sysBus, logBus) {
+    //реализация паттерна синглтон
+        if (this.Instance) {
+            return this.Instance;
+        } else {
+            WebSocketClient.prototype.Instance = this;
+        }
+        this._SourcesState;
+        this._sysBus = sysBus;
+        this._logBus = logBus;
+        this._Sockets = [];
+        this._lastId = 0;
+        this.Init();
+    }
+    Init() {
+        this._sysBus.on(EVENT_INIT, (_SourcesState, _ServicesState) => {
+            this._SourcesState = _SourcesState;
+            _ServicesState.SetServiceObject(SERVICE_NAME, this);
+        });
+        this._sysBus.on(EVENT_CONNECT, () => {
             this.Start();
         });
-        _sysBus.on('pwsc-msg-return', (msg, sourceName) => {
-            let index = this._SourcesInfo._collection.findIndex((element) => element._sourceName == sourceName);
+        this._sysBus.on('pwsc-msg-return', (msg, sourceName) => {
+            let index = this._SourcesState._collection.findIndex((element) => element.ExpectName == sourceName);
 
             if (index != -1) {
-                let key = this._SourcesInfo.GetConnectionKey(index);
-                this._Sockets[key].send(msg);
-                _logBus.emit('logInfo', "Message sent to " + this._Sockets[key].url);
+                let key = this._SourcesState.GetConnectionKey(index);
+                let socket = this._Sockets.find(s => s.ID == key);
+                socket.send(msg);
+                this._logBus.emit('logInfo', "Message sent to " + sourceName);
             }
             else {
-                _logBus.emit('logWarn', "Cannot find source " + sourceName);
+                this._logBus.emit('logWarn', "Cannot find source " + sourceName);
             }
         });
-        _sysBus.on('close-all', () => {
-            for (let i = 0; i < this._Sockets.length; i++)
-            {
-                this._Sockets[i].close();
-            }
-            _logBus.emit('logInfo', "All sockets are closed");
+        this._sysBus.on('close-all', () => {
+            this._Sockets.forEach(socket => {
+                socket.close();
+            });
+            this._logBus.emit('logInfo', "All sockets are closed");
         });
-        _ServicesState.SetServiceObject('WSClient', this);
-        _logBus.emit('logInfo', "WSClient initialized!");
-      }
-      /**
-       * @method
-       * @description Инициализирует соединение с источниками по вебсокетам
-       */
-      Start() {
-          let sInfo = this._SourcesInfo._collection;
-          this._connectionsToCheck = 0;
-          this._successConnections = 0;
-          this._failedConnections = 0;
-          // Посчитать - сколько нужно проверить соединений
-          for (let i = 0; i < sInfo.length; i++) {
-              let info = sInfo[i];
-              if (info._isConnected) continue;// Коннект уже присутствует - пропускаем
-              let name;
-              if (info._domainName != '') {// Нет доменного имени - используем IP
-                  name = info._domainName;
-              }
-              else if (info._ipAddress != '') {// Нет IP - пропускаем
-                  name = info._ipAddress;
-              }
-              else continue;
-              this._connectionsToCheck++;// Считаем сколько по итогу возможных соединений
-          };
-          // Создать сокеты для каждого коннекта и ждать
-          for (let i = 0; i < sInfo.length; i++) {
-              let info = sInfo[i];
-              if (info._isConnected) continue;// Коннект уже присутствует - пропускаем
-              let name;
-              if (info._domainName != '') {// Нет доменного имени - используем IP
-                  name = info._domainName;
-              }
-              else if (info._ipAddress != '') {// Нет IP - пропускаем
-                  name = info._ipAddress;
-              }
-              else continue;
-              let url = 'ws://' + name + ':' + info._port;
-              this._Sockets[i] = new WebSocket(url);              
-
-              this._Sockets[i].addEventListener("open", (event) => {
-                  this._successConnections++;
-                  this._SourcesInfo.SetConnectionFlagTrue(i);
-                  this._SourcesInfo.SetConnectionKey(i, i);
-                  this._LoggerBus.emit('logInfo', "Connected to " + this._Sockets[i].url);
-                  this.ConnectionDone();
-              });
-
-              this._Sockets[i].addEventListener("close", (event) => {
-                  if (event.wasClean) {
-                    this._LoggerBus.emit('logInfo', "Disconnected.");
-                  } else {
-                    //this._LoggerBus.emit('logWarn', "Unexpected disconnect.");
-                  }
-                  //this._LoggerBus.emit('logWarn', "Closed upon " + this._Sockets[i].url + "(Code: " + event.code + ", reason: " + event.reason + ")");
-                  this._SourcesInfo.SetConnectionFlagFalse(i);
-              });
-              
-              this._Sockets[i].addEventListener("message", (event) => {
-                  let sourceName = this._SourcesInfo.GetNameByKey(i);
-                  this._SystemBus.emit("wsc-msg-return", event.data, sourceName)
-                  this._LoggerBus.emit('logInfo', "Got data from " + sourceName);
-                  this._LoggerBus.emit('logInfo', "Data: " + event.data);
-              });
-                
-              this._Sockets[i].addEventListener("error", (error) => {
-                  this._failedConnections++;
-                  this._LoggerBus.emit('logWarn', "Closed upon " + this._Sockets[i].url + "(Reason: " + error.message + ")");
-                  this.ConnectionDone();
-              });
-          }
-          this.ConnectionDone();
-      }
-      /**
-       * @method
-       * Генерация события для процесса об окончании установления подключений
-       */
-      ConnectionDone() {
-          if (this._connectionsToCheck == (this._successConnections + this._failedConnections)) {
-              if (this._failedConnections == this._connectionsToCheck) {// ни к кому не подключились
-                  this._SystemBus.emit('ws-addr-fail');
-              }
-              else {
-                  this._SystemBus.emit('ws-addr-done');
-              }              
-          }
-      }
+        this._logBus.emit('logInfo', "WSClient initialized!");
     }
-    return WebSocketClient;
+    /**
+     * @method
+     * @description Инициализирует соединение с источниками по вебсокетам
+     */
+    Start() {
+        let tOut = setTimeout(() => {
+            this.ConnectionDone();
+        }, CONNECTION_TIMEOUT);
+        this._SourcesState._collection.forEach(connection => {
+            if (connection.IsConnected == false) {
+                let name = "";
+                if (connection.DNS != '') {name = connection.DNS}
+                else {name = connection.IP};
+                let url = 'ws://' + name + ':' + connection.Port;
+                let socket = new WebSocket(url);
+                socket.ID = this._lastId;
+                connection.CheckClient = true;
+                this._lastId++;
+
+                socket.addEventListener("open", (event) => {
+                    connection.IsConnected = true;
+                    connection.IndSrc = socket.ID;
+                    this._logBus.emit('logInfo', "Connected to " + socket.url);
+                });
+
+                socket.addEventListener("close", (event) => {
+                    if (event.wasClean) {
+                        this._logBus.emit('logInfo', "Disconnected.");
+                    } else {
+                        //this._logBus.emit('logWarn', "Unexpected disconnect.");
+                    }
+                    //this._logBus.emit('logWarn', "Closed upon " + this._Sockets[i].url + "(Code: " + event.code + ", reason: " + event.reason + ")");
+                    connection.IsConnected = false;
+                    connection.IndSrc = -1;
+                });
+
+                socket.addEventListener("message", (event) => {
+                    let sourceName = this._SourcesState.GetNameByKey(connection.IndSrc);
+                    this._sysBus.emit("wsc-msg-return", event.data, sourceName)
+                    this._logBus.emit('logInfo', "Got data from " + sourceName);
+                    this._logBus.emit('logInfo', "Data: " + event.data);
+                });
+
+                socket.addEventListener("error", (error) => {
+                    this._failedConnections++;
+                    this._logBus.emit('logWarn', "Closed upon " + socket.url + "(Reason: " + error.message + ")");
+                });
+
+            this._Sockets.push(socket);
+            }            
+        });
+    }
+    /**
+     * @method
+     * Генерация события для процесса об окончании установления подключений
+     */
+    ConnectionDone() {
+        this._sysBus.emit('ws-addr-done');
+    }
 }
+
+module.exports = WebSocketClient;

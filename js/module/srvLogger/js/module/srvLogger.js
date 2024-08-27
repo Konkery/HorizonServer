@@ -1,3 +1,14 @@
+class Message {
+    constructor() {
+        this.Timestamp;
+        this.Hash;
+        this.Message;
+        this.Level;
+        this.Source;
+        this.MetaData;
+    }
+}
+
 /**
  * @class
  * Класс предоставляет инструменты для логирования 
@@ -8,9 +19,11 @@ class ClassLogger {
      * @description
      * Конструктор класса логгера
      */
-    constructor() {
+    constructor(_sysBus, _logBus) {
         this._Enabled = false;
-        this._logBus;
+        this._sysBus = _sysBus;
+        this._logBus = _logBus;
+        this.Init();
     }
     /**
      * @method
@@ -19,22 +32,16 @@ class ClassLogger {
      * @param {Object} logBus           - шина логгера, по которой передаются сообщения для логирования
      * @param {Object} ServicesState    - объект-контейнер со службами фреймворка
      */
-    Init({logBus, _ServicesState}) {
-        logBus.on('logInfo', (msg) => {
+    Init() {
+        this._sysBus.on('register', (_ServicesState) => {
+            _ServicesState.SetServiceObject('Logger', this);
+        })
+        this._logBus.on('log', (msg) => {
             this.Log(this.LogLevel.INFO, msg)
         });
-        logBus.on('logDebug', (msg) => {
-            this.Log(this.LogLevel.DEBUG, msg)
-        });
-        logBus.on('logWarn', (msg) => {
-            this.Log(this.LogLevel.WARN, msg)
-        });
-        logBus.on('logError', (msg) => {
-            this.Log(this.LogLevel.ERROR, msg)
-        });
         this._Enabled = true;
-        _ServicesState.SetServiceObject('Logger', this);
-        this.Log(this.LogLevel.INFO, "Logger initialized!");
+       
+        this.Log({source: 'Hub.Services.Logger', level: this.LogLevel.INFO, msg: "Service initialized."});
     }
     /**
      * @setter
@@ -56,10 +63,12 @@ class ClassLogger {
      */
     get LogLevel() {
         return ({
-            INFO: 'INFO',
             DEBUG: 'DEBUG',
+            INFO: 'INFO',
+            NOTICE: 'NOTICE',
+            WARN: 'WARN',
             ERROR: 'ERROR',
-            WARN: 'WARN'
+            CRITICAL: 'CRITICAL'
         });
     }
     /**
@@ -84,12 +93,12 @@ class ClassLogger {
      * @param {String} msg      - текст сообщения
      * @returns 
      */
-    Log(qlfier, msg) {
+    Log(msg) {
         if (!this._Enabled) return;
         
         // TODO: добавить запись в базу данных
-        if (this.LogLevel[qlfier]) {
-            console.log(`[${this.GetSystemTime()}] ${qlfier}>> ${msg}`);
+        if (this.LogLevel[msg.level]) {
+            console.log(`${this.GetSystemTime()} [${msg.source}] -> ${this.LogLevel[msg.level]} : ${msg.msg}`);
             return true;
         }
         return false;
