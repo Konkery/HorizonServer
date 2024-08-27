@@ -1,5 +1,3 @@
-module.exports = () => {
-
 /**
  * @typedef SensorOptsType - объект с описательными характеристиками датчика и параметрами, необходимых для обеспечения работы датчика
  * @property {String} id
@@ -55,7 +53,7 @@ class ClassSensorInfo {
  * Класс, представляющий каждый отдельно взятый канал датчика.
  */
 class ClassChannelSensor {
-    #_SystemBus;
+    #_SysBus;
 
     #_ValueBuffer = {
         _depth : 1,
@@ -170,7 +168,7 @@ class ClassChannelSensor {
         val = this.#_Transform.TransformValue(val);
         this.#_ValueBuffer.push(val);
 
-        this.#_SystemBus.emit(`${this.ID}-fine`, this.Value);
+        this.#_SysBus.emit(`${this.ID}-fine`, this.Value);
 
         this._DataUpdated = true;
         this._DataWasRead = false;
@@ -188,10 +186,10 @@ class ClassChannelSensor {
             this.#_ValueBuffer._depth = _cap;
     }
 
-    Init({ SystemBus }) {
-        this.#_SystemBus = SystemBus;
+    Init({ sysBus }) {
+        this.#_SysBus = sysBus;
 
-        this.#_SystemBus.on(`${this.ID}-raw`, (val) => {
+        this.#_SysBus.on(`${this.ID}-raw`, (val) => {
             this.Value = val;
         });
     }
@@ -565,6 +563,5 @@ class ClassAlarms {
     }
 }
 
-return { ClassChannelSensor, ClassSensorInfo };
+module.exports = { ClassChannelSensor, ClassSensorInfo };
 
-}
