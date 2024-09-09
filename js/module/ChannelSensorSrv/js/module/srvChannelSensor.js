@@ -1,14 +1,13 @@
 /**
- * @typedef SensorOptsType - объект с описательными характеристиками датчика и параметрами, необходимых для обеспечения работы датчика
- * @property {String} id
- * @property {String} article
+ * @typedef SensorOptsType 
  * @property {String} name
+ * @property {String} article
+ * @property {String} moduleName
  * @property {String} type
  * @property {[String]} channelNames
- * @property {String} typeInSignal
- * @property {String} typeOutSignal
  */
 
+const ClassBaseService_S = require('srvService');
 /**
  * @class 
  * Самый "старший" предок в иерархии классов датчиков. 
@@ -52,8 +51,8 @@ class ClassSensorInfo {
  * @class
  * Класс, представляющий каждый отдельно взятый канал датчика.
  */
-class ClassChannelSensor {
-    #_SysBus;
+class ClassChannelSensor extends ClassBaseService_S {
+    #_SourceBus;
 
     #_ValueBuffer = {
         _depth : 1,
@@ -71,7 +70,7 @@ class ClassChannelSensor {
     #_Value;
     #_Status;
     #_SourceId;
-    #_DeviceID;
+    #_DeviceId;
     #_ChNum;           //номер канала (начиная с 0)
     #_ChangeThreshold;
 
@@ -82,19 +81,21 @@ class ClassChannelSensor {
     #_Alarms = null;
     /**
      * @constructor
-     * @param {ClassSensorInfo} sensorInfo - ссылка на основной объект датчика
+     * @param {ClassSensorInfo} _sensorInfo - ссылка на основной объект датчика
      * @param {Number} num - номер канала
      */
-    constructor(sensorInfo, _opts, _config) {
-        this.#_SensorInfo = sensorInfo;      //ссылка на объект физического датчика
+    constructor({ _busList, _busNameList, _id, _sensorInfo, _config }) {
+        super({ _name: _id, _busNameList, _busList });
+        const [sourceId, deviceId, chNum] = _id.split('-');
+
+        this.#_SensorInfo = _sensorInfo;      //ссылка на объект физического датчика
         /** Основные поля */
-        
         this.#_Value = 0;
         // TODO: обновление status по событиям
         this.#_Status = 1;
-        this.#_SourceId = _opts.sourceId;
-        this.#_DeviceID = _opts.deviceId;
-        this.#_ChNum    = _opts.chNum;             //номер канала (начиная с 0)
+        this.#_SourceId = sourceId;
+        this.#_DeviceId = deviceId;
+        this.#_ChNum    = +chNum;             //номер канала (начиная с 0)
         this.#_ChangeThreshold = 1;
         /** Флаги */
         this._DataUpdated = false;
@@ -102,6 +103,18 @@ class ClassChannelSensor {
         this._TimeStamp;
         /****** */
         this.SetupConfig(_config);
+        // получение имени шины, которая связывает канал с источником
+        this.#_SourceBus = Object.values(_busList).find(_bus => 
+            _bus.Name !=='sysBus' && _bus.Name !== 'logBus' && _bus.Name !== 'dataBus');
+        // топик по которому будут поступать сырые данные
+        const topic_get_data_raw = `${this.ID}-get-data-raw`;
+        // инициализация метода-обработчика на прием данных
+        this[`HandlerEvents_${topic_get_data_raw}`] = ((_topic, _msg) => {
+            this.Value = _msg.value[0];
+        }).bind(this);
+        // подписка на топик
+        if (this.#_SourceBus)
+            this.FillEventOnList(sourceBus.Name, [topic_get_data_raw]);
     }
     get Info()        { return this.#_SensorInfo; }
 
@@ -113,11 +126,12 @@ class ClassChannelSensor {
 
     get Filter()      { return this.#_Filter; }
 
+    static GetID(_sourceId, _deviceId, _chNum) { return `${_sourceId}-${_deviceId}-${('0'+_chNum).slice(-2)}`; }    
     /**
      * @getter
      * Возвращает уникальный идентификатор канала
      */
-    get ID() { return `${this.#_SourceId}-${this.#_DeviceID}-${('0'+this.#_ChNum).slice(-2)}`; }
+    get ID() { return ClassChannelSensor.GetID(this.#_SourceId, this.#_DeviceId, this.#_ChNum); }
 
     get SourceName() { return this.#_SourceId; }
     
@@ -168,7 +182,7 @@ class ClassChannelSensor {
         val = this.#_Transform.TransformValue(val);
         this.#_ValueBuffer.push(val);
 
-        this.#_SysBus.emit(`${this.ID}-fine`, this.Value);
+        // this.#_SysBus.emit(`${this.ID}-fine`, this.Value);
 
         this._DataUpdated = true;
         this._DataWasRead = false;
@@ -185,22 +199,52 @@ class ClassChannelSensor {
         if (_cap > 1)
             this.#_ValueBuffer._depth = _cap;
     }
-
-    Init({ sysBus }) {
-        this.#_SysBus = sysBus;
-
-        this.#_SysBus.on(`${this.ID}-raw`, (val) => {
-            this.Value = val;
-        });
-    }
-
-    SetupConfig(_config) {
-        const config = _config ?? {};
-        this.#_Transform   = new ClassTransform(config.transform);
-        this.#_Suppression = new ClassSuppression(config.suppression);
+    /**
+     * @typedef TransformOpts
+     * @property {number} k
+     * @property {number} b
+    */
+    /**
+     * @typedef SuppressionOpts
+     * @property {number} low
+     * @property {number} high
+    */
+    /**
+     * @typedef ZonesOpts
+     * @property {ZoneOpts} red
+     * @property {ZoneOpts} yellow
+     * @property {object} green
+    */
+    /**
+     * @typedef ZoneOpts
+     * @property {number} low
+     * @property {number} high
+     * @property {Function} cbLow
+     * @property {Function} cbHigh
+    */
+    /**
+     * @typedef ChConfigOpts
+     * @property {object} transform
+     * @property {object} suppression
+     * @property {object} zones
+     * @property {number} avgCapacity
+     */
+    /**
+     * @method
+     * @public
+     * @description Конфигурирует обработку данных на канале 
+     * @param {ChConfigOpts} _config 
+     */
+    SetupConfig(_config={}) {
+        this.#_Transform   = new ClassTransform(_config.transform);
+        this.#_Suppression = new ClassSuppression(_config.suppression);
         this.#_Filter = new ClassFilter();
         this._Alarms = null;
-        this.AvgCapacity = config.capacity || 1;
+        if (_config.zones) {
+            this.EnableAlarms();
+            this.#_Alarms.SetZones(_config.zones);
+        }
+        this.AvgCapacity = _config.avgCapacity ?? 1;
     }
 
     /**
@@ -302,6 +346,9 @@ class ClassChannelSensor {
      */
     SetPrecision(_pres) { 
         return this.#_SensorInfo.SetPrecision(this.#_ChNum, _pres); 
+    }
+    #GetServiceName(_id) {
+        return `${_id}`;
     }
 }
 /**
