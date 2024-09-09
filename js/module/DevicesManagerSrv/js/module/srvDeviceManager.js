@@ -1,6 +1,5 @@
 const { ClassChannelSensor, ClassSensorInfo } = require('srvChannelSensor');
-const ClassBaseService_S = require('../../../SrvService/js/module/srvService');
-// const ClassBaseService_S                      = require('srvService');
+const ClassBaseService_S = require('srvService');
 
 /** КОНСТАНТЫ */
 const EVENT_INIT = 'all-init';
