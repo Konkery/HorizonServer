@@ -1,20 +1,21 @@
 /** зависимости */
-// 'D:\\HorizonServer\\js\\module\\srvBusMsg\\js\\module\\srvBusMsg.js'
+// const { ClassBusMsg_S, constants: MSG_CONST } = require('D:\\HorizonServer\\js\\module\\srvBusMsg\\js\\module\\srvBusMsg.js');
 const { ClassBusMsg_S, constants: MSG_CONST } = require('srvBusMsg');
-// 'D:\\HorizonServer\\js\\module\\srvBus\\js\\module\\srvBus.js'
+
+// const ClassBus_S       = require('D:\\HorizonServer\\js\\module\\srvBus\\js\\module\\srvBus.js');
 const ClassBus_S       = require('srvBus');
 const { EventEmitter } = require('events');
 /********************************* */
 
 /** константы */
 const EVENT_INIT = 'init1';
-const STATUS_NOT_ACTIVE = 'not-active';
+const STATUS_INACTIVE = 'inactive';
 const STATUS_ACTIVE = 'active';
 
 const EVENT_BUS_NEW_MSG = 'new-bus-msg'; //новое сообщение на шине
 const EVENT_NEW_SOURCE = 'get-new-source'; //обновлен глобальный список источников (и соответственно шин)
 const DESTINATIONS_ALL = 'all';
-const NR_PSEUDOBUS_NAME = 'nr';
+const NR_BUS_NAME = 'nr';
 const DFLT_SEND_TIMEOUT = 3000;
 
 const ERROR_ALREADY_INSTANCED =
@@ -22,8 +23,8 @@ const ERROR_ALREADY_INSTANCED =
 const ERROR_INVALID_SERVICE_NAME = 'Invalid service name';
 /********************************* */
 /** списки топиков */
-const EVENT_ON_LIST_NR_LIST = ['all-run'];
-const EVENT_ON_LIST_SYSBUS_LIST = ['all-init1', 'all-new-source'];
+const EVENT_ON_LIST_NR = ['all-run'];
+const EVENT_ON_LIST_SYSBUS = ['all-init0', 'all-init1', 'all-close', 'all-new-source'];
 /********************************* */
 
 /** вспомогательные функции */
@@ -31,6 +32,12 @@ const capitalizeFunc = (str) => str.charAt(0).toUpperCase() + str.slice(1);
 const getBusHandlerName = (_busName) => `HandlerEvents${capitalizeFunc(_busName)}`;
 const getEventOnListName = (_busName) => `EVENT_ON_LIST_${_busName.toUpperCase()}`;
 const getEventEmitListName = (_serviceName) => `EVENT_EMIT_${_serviceName.toUpperCase()}_LIST`;
+const getResponseTopic = (_topic, _receiverName) => {       // proc-get-data -> this.Name-get-data
+    const [ destName, ...com ] = _topic.split('-');
+    return `${_receiverName}-${com.join('-')}`;
+};      
+const getEventHandlerName = (_topic) => `HandlerEvents_${_topic.replace(/-/g, '_')}`;
+const getEventEmitName = (_topic) => `EmitEvents_${_topic.replace(/-/g, '_')}`;
 /********************************* */
 
 /**
@@ -43,23 +50,25 @@ class ClassBaseService_S {
         'proc',
         'logger',
         'proxywsс',
+        'proxyhub',
         'dm',
         'wsc',
         'providermdb',
     ];
     static #_InstancedNameList = []; // статическая коллекция инициализированных служб
     #_Name;             // имя службы
-    #_BusNamesList;     // список имен шин, требуемых службе
+    #_BusNameList;     // список имен шин, требуемых службе
     #_Status;
     #_GlobalBusList;    // глобальная коллекция инициализированных шин
     #_Node;             // объект node
-    #_BusHandler  = {}; // объект, хранящий агрегатные обработчики шин
-    #_HandlerFunc = {}; // хранит значения типа 'топик события : функция обработчик'
-    #_EmitFunc    = {}; // хранит значения типа 'топик события': функция-emit
-    #_ServicesState;    // объект служб
-    #_InputInterface;   // прослойка между шиной и службой: обеспечивает мультиплексирование сообщений от обработчика шины на обработчики команд `com`
-    #_ServicesWorkWith = new Set(); // коллекция имен служб, на которые будет выполняться рассылка сообщений
-    _BusList = {};      // объект-коллекция шин, используемых службой
+    #_EventOnList    = {}; // коллекция всех событий, которые слушает служба по шине (ключ - имя шины)
+    #_EventEmitList  = {}; // коллекция всех событий, которые направляются слушателю (ключ - имя слушателя)
+    #_BusHandlerList = {}; // объект, хранящий агрегатные обработчики шин
+    #_HandlerFunc = {};  // хранит значения типа 'топик события : функция обработчик'
+    #_EmitFunc    = {};  // хранит значения типа 'топик события': функция-emit
+    #_PromiseList = {};  // контейнер с промисами, привязанными к запросам
+    #_ServicesState;     // объект служб
+    #_BusList = {};      // объект-коллекция шин, используемых службой
     /**
      * @typedef {Object} ServiceOpts
      * @property {string} name - имя службы
@@ -71,35 +80,29 @@ class ClassBaseService_S {
      * @constructor
      * @param {ServiceOpts} _serviceOpts
      */
-    constructor({ name, busNamesList, busList, node }) {
+    constructor({ _name, _busNameList, _busList, _node }) {
         /* реализация Singleton */
         const instancedAlready =
-            ClassBaseService_S.#_InstancedNameList.includes(name);
+        ClassBaseService_S.#_InstancedNameList.includes(_name);
         // если служба уже была создана - ошибка
         if (instancedAlready) throw new Error(ERROR_ALREADY_INSTANCED);
-        const validName = ClassBaseService_S.#_ServicesNameList.includes(name);
+        /* закомментировано на пока не устаканится список служб
+        const validName = ClassBaseService_S.#_ServicesNameList.includes(_name);
         // неожиданное имя службы - ошибка
-        if (!validName) throw new Error(ERROR_INVALID_SERVICE_NAME);
+        if (!validName) throw new Error(ERROR_INVALID_SERVICE_NAME);*/
         /* *******************  */
-        this.#_Name = name; 
-        this.#_BusNamesList = busNamesList;
-        this.#_Status = STATUS_NOT_ACTIVE;
-        this.#_GlobalBusList = busList;
-        this.#_InputInterface = new EventEmitter();
+        this.#_Name = _name; 
+        this.#_BusNameList = _busNameList;
+        this.#_Status = STATUS_INACTIVE;
+        this.#_GlobalBusList = _busList;
         // инициализация Node-red интерфейса службы
-        if (typeof node?.send === 'function') this.InitNR(node);
+        if (typeof _node?.send === 'function') this.InitNR(_node);      
         // подтягивание требуемых шин из глобального объекта
         this.UpdateBusList();
-
         // подписка на системные события
-        this.FillEventOnList(NR_PSEUDOBUS_NAME, EVENT_ON_LIST_NR_LIST);
-        this.FillEventOnList('sysBus', EVENT_ON_LIST_SYSBUS_LIST);
+        this.FillEventOnList('sysBus', EVENT_ON_LIST_SYSBUS);
 
-        /* старая версия для наглядности 
-        this._BusList.sysBus.on(EVENT_INIT, this.HandlerInit1.bind(this));
-        this._BusList.sysBus.on(EVENT_NEW_SOURCE, this.UpdateBusList.bind(this));
-        */
-        ClassBaseService_S.#_InstancedNameList.push(name);
+        ClassBaseService_S.#_InstancedNameList.push(_name);
     }
 
     /**
@@ -121,41 +124,37 @@ class ClassBaseService_S {
     /**
      * @method
      * @description Заполняет коллекцию имен топиков, на которые выполняется подписка, на каждую шину.
-     * Создание массива типа EVENT_ON_LIST_SYSBUS
      * @param {string} _busName - имя шины, по которой получаем сообщение
-     * @param {...string} eventNames
+     * @param {...string} _topicNames
      */
-    FillEventOnList(_busName, ...eventNames) {
-        const listName = getEventOnListName(_busName);
-        if (!Array.isArray(this[listName]))
-            Object.defineProperty(this, listName, {
-                writable: false,
-                configurable: false,
-                value: []
-        });
-        this[listName].push(...eventNames);
+    FillEventOnList(_busName, _topicNames) {
+        this.#_EventOnList[_busName] ??= [];
+        this.#_EventOnList[_busName].push(
+            _topicNames.filter(topicName => !this.#_EventOnList[_busName].find(event => event.name === topicName))
+            .map(topicName => ({ name: topicName, on: false }))
+        );
+        // инициализация агрегатных обработчиков
+        this.#AddHandlerEvents();
+        // наполнение _HandleFunc ссылками на методы-обработчики переданных событий
+        this.#PackHandlerFunc();
     }
-
     /**
      * @method
      * @description Заполняет коллекцию топиков, по которым передается сообщение, на каждую шину.
-     * Создание массива типа EVENT_EMIT_DM_LIST
      * @param {string} _serviceName - имя службы, на которую уходит ответ
-     * @param {...string} eventNames
+     * @param {[string]} eventNames
      */
-    FillEventEmitList(_serviceName, ...eventNames) {
+    FillEventEmitList(_serviceName, _topicNames) {
         if (!ClassBaseService_S.#_ServicesNameList.includes(_serviceName) && _serviceName !== 'all') {
             // TODO: вероятно ошибка
         }
-        this.#_ServicesWorkWith.add(_serviceName);
-        const listName = getEventEmitListName(_serviceName);
-        if (!Array.isArray(this[listName]))
-            Object.defineProperty(this, listName, {
-                writable: false,
-                configurable: false,
-                value: []
-        });
-        this[listName].push(...eventNames);
+        this.#_EventEmitList[_serviceName] ??= [];
+        this.#_EventEmitList[_busName].push(
+            _topicNames.filter(topicName => !this.#_EventOnList[_busName].find(event => event.name === topicName))
+            .map(topicName => ({ name: topicName }))
+        );
+        // наполнение _EmitFunc ссылками на методы-эмиттеры
+        this.#PackEmitFunc();
     }
     /**
      * @method
@@ -164,98 +163,126 @@ class ClassBaseService_S {
      * @param {string} _busName 
      */
     #CreateBusHandler(_busName) {
-        return ((_topic, _data) => {
-            const func = this.#_HandlerFunc[_topic];
-            func?.(_topic, _data);
+        console.log(`${this.Name} | #CreateBusHandler | new ${_busName} handler`);
+        return ((_topic, _msg) => {
+            try {
+                const { type } = _msg.metadata; 
+                // если получен ответ на запрос
+                if (type === MSG_CONST.MSG_TYPE_RESPONSE) {
+                    const { hash } = _msg.metadata;
+                    // ищем в контейнере по хэшу
+                    this.#_PromiseList[hash]?.res(true);
+                }
+            } catch (e) {
+                console.log(`Error while processing msg ${_msg?.hash}`);
+                return;
+            }
+            const handlerFunc = this.#_HandlerFunc[_topic];
+            handlerFunc?.(_topic, _msg); 
         });
     }
-
     /**
      * @method
      * @private
      * @description добавляет агрегатный обработчик каждой из используемых шин
      */
     #AddHandlerEvents() {
-        Object.keys(this._BusList)
-        .forEach(_busName => {
-            // восстановление имени списка топиков (событий) шины
-            const topicListName = this[getEventOnListName(_busName)];
+        Object.keys(this.#_BusList).forEach(_busName => {
             // обращение к собственно списку
-            const topicList = this[topicListName];
+            const eventList = this.#_EventOnList[_busName].filter(event => event.on == false)
             // перебор всех топиков внутри списков и установка обработчиков на них
-            topicList?.forEach(_topic => {
+            eventList?.forEach(_event => {
+                const topic = _event.name;
                 // обращение к агрегатному обработчику шины
-                const busHandler = this.#CreateBusHandler(_busName);
-                this.#_BusHandler[_busName] = busHandler;
-
-                /* если busHandler извлекается из свойств/методов класса
-                const busHandler = this[getBusHandlerName(_busName)]; */
+                this.#_BusHandlerList[_busName] ??= this.#CreateBusHandler(_busName).bind(this);
+                const busHandler = this.#_BusHandlerList[_busName];
 
                 // подписка агрегатного обработчика на топик
-                this._BusList[_busName]?.on(_topic, busHandler.bind(this));
+                console.log(`${this.Name} | AddHandlerEvents | add handler on topic ${topic}`);
+                this.#_BusList[_busName]?.on(topic, _msg => busHandler(topic, _msg));
+                _event.on = true;
             });
         });
     }
-
     /**
      * @method
      * @private
-     * @description метод выполняет начальную, безусловную инициализацию обработчиков событий всех шин
+     * @description сохраняет функции-обработчики в объект
      */
-    #InitHandlerFunc() {
-        //итерация имен шин
-        Object.keys(this._BusList)
-            // преобразование имен шин в имена списков событий этих шин     Пример: sysBus -> EVENT_ON_LIST_SYSBUS
-            .map((busName) => this[getEventOnListName(busName)])
-            // отбрасывание имен списков, которые ранее не были инициализированы в объекте // TODO: оценить возможна ли такая ситуация
-            .filter((eventList) => Array.isArray(this[eventList]))
-            .forEach((eventList) => {
-                eventList.forEach((topic) => {
-                    // Формируем имя обработчика, убирая префикс <имя-службы> и заменяя '-' на '_'
-                    const handlerName = `HandlerEvents_${topic
-                        .replace(/-/g, '_')}`;
-                    this.#_HandlerFunc[topic] = this[handlerName]?.bind(this);  //TODO возможно использовать ??= чтобы избежать переприсваивания функция
-                });
+    #PackHandlerFunc() {
+        Object.values(this.#_EventOnList[_busName])
+        .forEach(_eventList => {
+            _eventList.forEach(_event => {
+                if (_event.on) {
+                    const topic = _event.name;
+                    // Формируем имя обработчика, заменяя '-' на '_'
+                    const handlerName = getEventHandlerName(topic);
+                    this.#_HandlerFunc[topic] ??= this[handlerName]?.bind(this);
+                }
             });
-    }
-
-    #InitEmitFunc() {
-        this.#_ServicesWorkWith.forEach(_serviceName => {
-            // обращение к списку топиков, связанных с эмит-функциями
-            const emitList = this[getEventEmitListName(_serviceName)];
-            // обработка списка эмиттеров каждой службы
-            emitList?.forEach(topic => {
-                // Формируем имя эмиттера
-                const emitName = `EmitEvents_${topic
-                    .replace(/-/g, '_')}`;
-                this.#_EmitFunc[topic] = this[emitName]?.bind(this);
-            })
-        })
+        });
     }
     /**
      * @method
-     * @description Сохраняет ссылки на используемые шины, информацию об источниках и инициализирует базовые обработчики сообщений
-     * @param {object} dependencies
+     * @private
+     * @description собирает методы-эмиттеры в один объект
      */
-    async HandlerInit1({ ServicesState, SourcesState }) {
-        this.#_ServicesState ??= ServicesState;
-        this.#_ServicesState.SetServiceObject(this.Name, this);
-
-        this.UpdateBusList();
+    #PackEmitFunc() {
+        Object.keys(this.#_EmitFunc).forEach(_serviceName => {
+            // обращение к списку топиков, связанных с эмит-функциями
+            const emitList = this.#_EmitFunc[_serviceName];   //this[getEventEmitListName(_serviceName)];
+            // обработка списка эмиттеров каждой службы
+            emitList?.forEach(_topic => {
+                // Формируем имя эмиттера
+                const emitName = getEventEmitName(_topic);
+                this.#_EmitFunc[_topic] = this[emitName]?.bind(this);
+            })
+        });
     }
+    /**
+     * @method
+     * @description Обработчик события all-init0
+     * @param {string} _topic 
+     * @param {object} _msg 
+     */
+    HandlerEvents_all_init0(_topic, _msg) { } 
     /**
      * @method
      * @description Обработчик события all-init1
      * @param {string} _topic 
-     * @param {object} _data 
+     * @param {object} _msg 
      */
-    HandlerEvents_all_init1(_topic, _data) {
-        const { ServicesState } = _data;
+    HandlerEvents_all_init1(_topic, _msg) {
+        console.log(`super HandlerEvents_all_init1`);
+        const { ServicesState } = _msg.arg[0];
         this.#_ServicesState ??= ServicesState;
         this.#_ServicesState.SetServiceObject(this.Name, this);
-
+        this.#_Status = STATUS_ACTIVE;
         this.UpdateBusList();
     } 
+    /**
+     * @method
+     * @description убирает службу из списка созданных 
+     * @param {string} _topic 
+     * @param {object} _msg 
+     */
+    HandlerEvents_all_close(_topic, _msg) {
+        const index = ClassBaseService_S.#_InstancedNameList.indexOf(this.Name);
+
+        if (index > -1) {
+            ClassBaseService_S.#_InstancedNameList.splice(index, 1);
+        }
+        console.log(`${this.Name} | all-close`);
+        // TODO: обращение к ServicesState
+        this.#_EventOnList    = {}; // коллекция всех событий, которые слушает служба по шине (ключ - имя шины)
+                                    // { имя_шины1: [ { topic1, on }, { topic2, on} ... ]}
+        this.#_EventEmitList  = {}; // коллекция всех событий, которые направляются слушателю (ключ - имя слушателя)
+        this.#_BusHandlerList = {}; // объект, хранящий агрегатные обработчики шин
+        this.#_HandlerFunc = {}; // хранит значения типа 'топик события : функция обработчик'
+        this.#_EmitFunc    = {}; // хранит значения типа 'топик события': функция-emit
+        this.#_PromiseList = {}; // контейнер с промисами, привязанными к запросам
+        this.#_ServicesState;    // объект служб
+    }
     /**
      * @method
      * @description Обработчик события all-new-source
@@ -265,131 +292,20 @@ class ClassBaseService_S {
     HandlerEvents_all_new_source(_topic, _data) {
         this.UpdateBusList();
     }
-
-    HandlerEvents_all_run(_topic, _data) {
-        // 
-    }
-
     EmitEvents_all_get_msg_nr(_topic, _data) {
         this.#_Node.send({ topic: _topic, payload: _data });
     }
-    
     /**
      * @method
+     * @public
      * @description Обновляет коллекцию используемых шин
      */
     UpdateBusList() {
-        Object.keys(this.#_GlobalBusList)
-            .filter((busName) => this.#_BusNamesList.includes(busName))
-            .forEach((busName) => {
-                this._BusList[busName] = bus;
-                this.#CreateBusHandler(bus);
-            });
-    }
-    /**
-     * @method
-     * @description Устанавливает обработчик на шину, который транслирует вх.сообщения на внутренний интерфейс службы
-     * @param {ClassBus_S} _bus
-     */
-    #CreateBusHandler(_bus) {
-        _bus.on(EVENT_BUS_NEW_MSG, (_msg) => {
-            const { topic, payload } = _msg;
-            const { destinations, com } = payload;
-            // проверка destinations
-            const destMatch =
-                destinations?.includes(this.Name) || destinations === DESTINATIONS_ALL;
-            if (destMatch) {
-                const eventName = `${_bus.Name}-${com}`;
-                this.#_InputInterface.emit(eventName, _msg);
-            }
+        this.#_BusNameList.forEach(_busName => {
+            this.#_BusList[_busName] ??= this.#_GlobalBusList[_busName];
+            // this.#CreateBusHandler(this._BusList[_busName]);
         });
     }
-
-    /**
-     * @method
-     * @description Создает обработчик для сообщения
-     * @param {string} _busName - имя шины
-     * @param {string} _com  - имя сообщения/события
-     * @param {Function} _func - функция-обработчик
-     */
-    AddComHandler(_busName, _com, _func) {
-        const eventName = `${_busName}-${_com}`;
-        this.#_InputInterface.on(eventName, (_msg) => {
-            if (true)
-                //TODO: возможно разместить доп.проверки на корректность типа вх сообщений / статус службы
-                _func(_msg);
-        });
-    }
-
-    /**
-     * @method
-     * @description
-     * Отправляет сообщение на шину
-     * @param {string} _busName - имя шины, на которую отправляется сообщение
-     * @param {ClassBusMsg_S}  _msg - сообщение
-     * @param {object} _opts - дополнительные параметры отправки сообщения
-     * @returns
-     */
-    async SendMsg(_busName, _msg, _opts) {
-        // TODO: проверка что шина с таким именем существует
-        let bus = this._BusList[_busName];
-        // проверка и создание объекта сообщения
-        let msg = this.CreateMsg(_msg);
-        // штатная отправка сообщения
-        if (bus instanceof EventEmitter && msg)
-            return this.#SendMsgOnBus(
-                bus,
-                msg,
-                _opts ?? { timeout: DFLT_SEND_TIMEOUT }
-            );
-
-        return new Promise((res) => res(undefined)); //возвращение промиса, который вернет undefined
-    }
-
-    /**
-     * @method
-     * @description
-     * Отправляет сообщение на шину
-     * @param {EventEmitter} _bus - объект шины, на которую отправляется сообщение
-     * @param {ClassBusMsg_S}  _msg - сообщение
-     * @param {number}  _opts - дополнительные параметры отправки сообщения
-     * @returns
-     */
-    async #SendMsgOnBus(_bus, _msg, _opts) {
-        _bus.emit(EVENT_BUS_NEW_MSG, _msg);
-        // если метод вызван с флагом запроса
-        if (_msg.payload.type === MSG_CONST.MSG_TYPE_REQUEST) {
-            return new Promise((resolve, reject) => {
-                // одноразовая подписка на сообщение с именем hash направляемого запроса
-                const eventName = `${_bus.Name}-${_msg.payload.com}-res`;
-                console.log(`send ${eventName}`);
-                this.#_InputInterface.once(eventName, (response) => resolve(response));
-                // взведение таймаута по которому будет вызван reject
-                // TODO: продумать нужен ли reject из функции       // setTimeout(() => reject(`Timeout error`), _timeout);
-                setTimeout(() => resolve(undefined), _opts.timeout);
-            });
-        }
-    }
-
-    /**
-     * @method
-     * @description
-     * Формирует сообщение-ответ и отправляет его на шин
-     * @param {string} _req - объект сообщения-запроса, на который формируется ответ
-     * @param {string} _busName - имя шины, на которую отправляется сообщение
-     * @param {ClassBusMsg_S}  _msg - сообщение
-     * @returns
-     */
-    async SendResMsg(_req, _busName, _msg) {
-        if (typeof _msg === 'object') {
-            _msg.topic = _req.payload.hash;
-            _msg.destinations = [_req.payload.source];
-            _msg.payload.type = MSG_CONST.MSG_TYPE_RESPONSE;
-
-            this.SendHrz(_busName, _msg);
-        }
-    }
-
     /**
      * @method
      * @description Инициализирует интерфейс для приема сообщений, пришедших от node-red узлов
@@ -398,38 +314,93 @@ class ClassBaseService_S {
      */
     InitNR(_node) {
         this.#_Node = _node;
-        this._BusList[NR_PSEUDOBUS_NAME] = new EventEmitter();
-
-        /*this._BusList[NR_PSEUDOBUS_NAME].on(EVENT_BUS_NEW_MSG, (msg) =>
-            this.#_Node.send(msg)
-        );*/
+        this.#_BusList[NR_BUS_NAME] = new EventEmitter();
     }
-
     /**
      * @method
      * @public
-     * Принимает сообщение, ранее полученное по Node-RED
+     * @description Принимает сообщение, ранее полученное по Node-RED
      * @param {ClassBusMsg_S} _msg
      */
     ReceiveNR({ topic, payload }) {
-        this._BusList[NR_PSEUDOBUS_NAME].emit(topic, payload);
+        this.#_BusList[NR_BUS_NAME]?.emit(topic, payload);
     }
-
+    /**
+     * @typedef MsgOpts
+     * @property {string} com
+     * @property {[any]} [arg]
+     * @property {[any]} [value]
+     * @property {string} [hash]
+     * @property {string} dest
+     */
     /**
      * @method
      * @public
+     * @description создает и возвращает объект сообщения
      * @description Создает объект класса BusMsg
-     * @param {*} _msg
+     * @param {MsgOpts} _msgOpts
      * @returns
      */
-    CreateMsg(_msg) {
+    CreateMsg(_msgOpts) {
         try {
             // преобразование объекта сообщения
-            _msg.payload.source = this.#_Name;
-            return new ClassBusMsg_S(_msg);
-        } catch {
+            _msgOpts.metadata.service = this.Name;
+            return new ClassBusMsg_S(_msgOpts);
+        } catch (e) {
+            console.log(`BusMsg | ${e}`);
             return null;
         }
+    }
+    /**
+     * @typedef EmitMsgOpts
+     * @property {number} timeout - время в мс через которое промис разрешится со значением false
+     */
+    /**
+     * @method
+     * @public
+     * @description Отправка сообщения на шину
+     * @param {string} _busName 
+     * @param {string} _topic 
+     * @param {MsgOpts} _msg 
+     * @param {EmitMsgOpts} _opts 
+     * @returns 
+     */
+    async EmitMsg(_busName, _topic, _msg, _opts) {
+        const bus = this.#_BusList[_busName];
+
+        if (!bus) {
+            console.log(`No bus with name ${_busName}`);
+            return false;
+        }
+        const msg = this.CreateMsg(_msg);
+        if (!msg) {
+            console.log(`warn | unexpected msg format`);
+            return;
+        }
+        // отправка через setImmediate чтобы перехват сообщения не произошел раньше чем return промиса
+        setImmediate(() => bus.emit(_topic, msg));
+        // если запрос требует ответ, то создается промис, который выполнится либо по таймауту либо при получении ответа
+        if (msg.metadata.demandRes) {
+            return this.#CreatePromise(msg, _opts);
+        }
+    }
+    /**
+     * @method
+     * @private
+     * @description Создает, сохраняет и возвращает промис, который разрешится либо при получении ответа (с результатом true) либо через заданный таймаут (false).
+     * @param {string} _msgHash 
+     * @param {EmitMsgOpts} _opts 
+     * @returns 
+     */
+    #CreatePromise(_msgHash, _opts) {
+        return new Promise((res, rej) => { 
+            this.#_PromiseList[_msgHash] = { res, rej };      
+            const timeout_ms = _opts.timeout ?? DFLT_SEND_TIMEOUT;
+            const timeout = setTimeout(() => {
+                res(false);
+                delete this.#_PromiseList[_msgHash];
+            }, timeout_ms);
+        });
     }
 }
 
