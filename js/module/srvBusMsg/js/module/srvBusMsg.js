@@ -25,13 +25,12 @@ class ClassBusMsg_S {
      * @constructor
      * @param {TypeBusMsgConstructor} _msg 
      */
-    constructor({ com, arg=[], value=[], source, service, dest, demandRes=false,  hash }) {
+    constructor({ com, arg=[], value=[], source, dest, demandRes=false,  hash }) {
         this.timestamp = new Date().getTime(),
         this.metadata = {
             hash: hash ?? generateHash(),                // TODO: использовать библиотечную функцию
             type: hash ? MSG_TYPE_RESPONSE : MSG_TYPE_REQUEST,
             demandRes: Boolean(demandRes),
-            service: this.#GetStrOrErr('service', service),
             source: this.#GetStrOrErr('source', source),
             dest
         },
