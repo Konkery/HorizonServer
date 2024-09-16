@@ -1,9 +1,7 @@
 /** зависимости */
-// const { ClassBusMsg_S, constants: MSG_CONST } = require('D:\\HorizonServer\\js\\module\\srvBusMsg\\js\\module\\srvBusMsg.js');
 const { ClassBusMsg_S, constants: MSG_CONST } = require('srvBusMsg');
 
-// const ClassBus_S       = require('D:\\HorizonServer\\js\\module\\srvBus\\js\\module\\srvBus.js');
-const ClassBus_S       = require('srvBus');
+// const ClassBus_S       = require('srvBus');
 const { EventEmitter } = require('events');
 /********************************* */
 
@@ -129,14 +127,16 @@ class ClassBaseService_S {
      */
     FillEventOnList(_busName, _topicNames) {
         this.#_EventOnList[_busName] ??= [];
-        this.#_EventOnList[_busName].push(
-            _topicNames.filter(topicName => !this.#_EventOnList[_busName].find(event => event.name === topicName))
-            .map(topicName => ({ name: topicName, on: false }))
-        );
+        _topicNames
+            .filter(_topicName => !this.#_EventOnList[_busName].find(event => event.name === _topicName))
+            .forEach(_topicName => {
+                this.#_EventOnList[_busName].push({ name: _topicName, on: false });
+            });
+        
         // инициализация агрегатных обработчиков
-        this.#AddHandlerEvents();
+        this.#AddHandlerEvents(_busName);
         // наполнение _HandleFunc ссылками на методы-обработчики переданных событий
-        this.#PackHandlerFunc();
+        this.#PackHandlerFunc(_busName);
     }
     /**
      * @method
@@ -149,8 +149,8 @@ class ClassBaseService_S {
             // TODO: вероятно ошибка
         }
         this.#_EventEmitList[_serviceName] ??= [];
-        this.#_EventEmitList[_busName].push(
-            _topicNames.filter(topicName => !this.#_EventOnList[_busName].find(event => event.name === topicName))
+        this.#_EventEmitList[_serviceName].push(
+            _topicNames.filter(topicName => !this.#_EventEmitList[_serviceName].find(event => event.name === topicName))
             .map(topicName => ({ name: topicName }))
         );
         // наполнение _EmitFunc ссылками на методы-эмиттеры
@@ -163,18 +163,19 @@ class ClassBaseService_S {
      * @param {string} _busName 
      */
     #CreateBusHandler(_busName) {
-        console.log(`${this.Name} | #CreateBusHandler | new ${_busName} handler`);
         return ((_topic, _msg) => {
+            console.log(`${this.Name} | ${_topic}  ${_msg}`);
             try {
                 const { type } = _msg.metadata; 
                 // если получен ответ на запрос
                 if (type === MSG_CONST.MSG_TYPE_RESPONSE) {
                     const { hash } = _msg.metadata;
                     // ищем в контейнере по хэшу
-                    this.#_PromiseList[hash]?.res(true);
+                    console.log(`look for hash ${hash}`);
+                    this.#_PromiseList[hash]?.(true);
                 }
             } catch (e) {
-                console.log(`Error while processing msg ${_msg?.hash}`);
+                console.log(`Error while processing msg ${_topic}`);
                 return;
             }
             const handlerFunc = this.#_HandlerFunc[_topic];
@@ -186,22 +187,19 @@ class ClassBaseService_S {
      * @private
      * @description добавляет агрегатный обработчик каждой из используемых шин
      */
-    #AddHandlerEvents() {
-        Object.keys(this.#_BusList).forEach(_busName => {
-            // обращение к собственно списку
-            const eventList = this.#_EventOnList[_busName].filter(event => event.on == false)
-            // перебор всех топиков внутри списков и установка обработчиков на них
-            eventList?.forEach(_event => {
-                const topic = _event.name;
-                // обращение к агрегатному обработчику шины
-                this.#_BusHandlerList[_busName] ??= this.#CreateBusHandler(_busName).bind(this);
-                const busHandler = this.#_BusHandlerList[_busName];
+    #AddHandlerEvents(_busName) {
+        const event_list = this.#_EventOnList[_busName]?.filter(event => !event.on);
+        // перебор всех топиков внутри списков и установка обработчиков на них
+        event_list?.forEach(_event => {
+            const topic = _event.name;
+            // обращение к агрегатному обработчику шины
+            this.#_BusHandlerList[_busName] ??= this.#CreateBusHandler(_busName).bind(this);
+            const busHandler = this.#_BusHandlerList[_busName];
 
-                // подписка агрегатного обработчика на топик
-                console.log(`${this.Name} | AddHandlerEvents | add handler on topic ${topic}`);
-                this.#_BusList[_busName]?.on(topic, _msg => busHandler(topic, _msg));
-                _event.on = true;
-            });
+            // подписка агрегатного обработчика на топик
+            console.log(`${this.Name} | AddHandlerEvents | add handler on topic ${topic}`);
+            this.#_BusList[_busName]?.on(topic, _msg => busHandler(topic, _msg));
+            _event.on = true;
         });
     }
     /**
@@ -209,17 +207,16 @@ class ClassBaseService_S {
      * @private
      * @description сохраняет функции-обработчики в объект
      */
-    #PackHandlerFunc() {
-        Object.values(this.#_EventOnList[_busName])
-        .forEach(_eventList => {
-            _eventList.forEach(_event => {
-                if (_event.on) {
-                    const topic = _event.name;
-                    // Формируем имя обработчика, заменяя '-' на '_'
-                    const handlerName = getEventHandlerName(topic);
-                    this.#_HandlerFunc[topic] ??= this[handlerName]?.bind(this);
-                }
-            });
+    #PackHandlerFunc(_busName) {
+        const event_list = this.#_EventOnList[_busName];
+        
+        event_list.forEach(_event => {
+            if (_event.on) {
+                const topic = _event.name;
+                // Формируем имя обработчика, заменяя '-' на '_'
+                const handler_name = getEventHandlerName(topic);
+                this.#_HandlerFunc[topic] ??= this[handler_name]?.bind(this);
+            }
         });
     }
     /**
@@ -230,13 +227,13 @@ class ClassBaseService_S {
     #PackEmitFunc() {
         Object.keys(this.#_EmitFunc).forEach(_serviceName => {
             // обращение к списку топиков, связанных с эмит-функциями
-            const emitList = this.#_EmitFunc[_serviceName];   //this[getEventEmitListName(_serviceName)];
+            const emitList = this.#_EmitFunc[_serviceName];
             // обработка списка эмиттеров каждой службы
             emitList?.forEach(_topic => {
                 // Формируем имя эмиттера
                 const emitName = getEventEmitName(_topic);
                 this.#_EmitFunc[_topic] = this[emitName]?.bind(this);
-            })
+            });
         });
     }
     /**
@@ -303,7 +300,6 @@ class ClassBaseService_S {
     UpdateBusList() {
         this.#_BusNameList.forEach(_busName => {
             this.#_BusList[_busName] ??= this.#_GlobalBusList[_busName];
-            // this.#CreateBusHandler(this._BusList[_busName]);
         });
     }
     /**
@@ -344,11 +340,30 @@ class ClassBaseService_S {
     CreateMsg(_msgOpts) {
         try {
             // преобразование объекта сообщения
-            _msgOpts.metadata.service = this.Name;
+            _msgOpts.source = this.Name;
             return new ClassBusMsg_S(_msgOpts);
         } catch (e) {
+            this.EmitEvents_logger_log({ level: 'WARN', msg: `BusMsg | ${e}` });
             console.log(`BusMsg | ${e}`);
             return null;
+        }
+    }
+    /**
+     * @method
+     * @public
+     * @description Предназначен для отправки сообщений на логгер. В arg указывается уровень сообщения, а в value - сообщение 
+     * @param {EmitEventsOpts} param0 
+     */
+    EmitEvents_logger_log({ level, msg }) {
+        const argsValid = typeof level === 'string' && typeof msg === 'string';
+        if (argsValid) {
+            const bus_msg = {
+                dest: 'logger',
+                com: 'logger-log',
+                arg: [level],
+                value: [msg]
+            }
+            this.EmitMsg('logBus', 'logger-log', bus_msg);
         }
     }
     /**
@@ -377,12 +392,11 @@ class ClassBaseService_S {
             console.log(`warn | unexpected msg format`);
             return;
         }
+        // если запрос требует ответ, то создается промис, который выполнится либо по таймауту либо при получении ответа
+        const promise = msg.metadata.demandRes ? this.#CreatePromise(msg.metadata.hash, _opts) : Promise.resolve(true);
         // отправка через setImmediate чтобы перехват сообщения не произошел раньше чем return промиса
         setImmediate(() => bus.emit(_topic, msg));
-        // если запрос требует ответ, то создается промис, который выполнится либо по таймауту либо при получении ответа
-        if (msg.metadata.demandRes) {
-            return this.#CreatePromise(msg, _opts);
-        }
+        return promise;
     }
     /**
      * @method
@@ -394,12 +408,27 @@ class ClassBaseService_S {
      */
     #CreatePromise(_msgHash, _opts) {
         return new Promise((res, rej) => { 
-            this.#_PromiseList[_msgHash] = { res, rej };      
-            const timeout_ms = _opts.timeout ?? DFLT_SEND_TIMEOUT;
+            /* debughome */
+            const t1 = new Date().getTime();
+            console.log(`created prom | ${_msgHash} | ${t1}`);
+            /* debugend */
+            // время, не позднее которого промис удет разрешен
+            const timeout_ms = _opts?.timeout ?? DFLT_SEND_TIMEOUT;
+            // запуск таймаута
             const timeout = setTimeout(() => {
+                /* debughome */
+                const t2 = new Date().getTime();
+                console.log(`promise res | ${_msgHash} | ${t2-t1}`);
+                /* debugend */
                 res(false);
                 delete this.#_PromiseList[_msgHash];
             }, timeout_ms);
+            // по хэшу присваивается функция, вызов которой разрешит промис и выключит таймаут
+            this.#_PromiseList[_msgHash] = () => {
+                res();
+                clearTimeout(timeout);
+                delete this.#_PromiseList[_msgHash];
+            };      
         });
     }
 }
