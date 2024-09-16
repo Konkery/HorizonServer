@@ -10,27 +10,29 @@ const generateHash = () => Math.trunc(new Date().getTime()*Math.random());
  * @property {string} com
  * @property {[any]} arg
  * @property {[any]} value
- * @property {string} service - имя службы, которая отправила сообщение; 
- * @property {string} source 
+ * @property {string} source
+ * @property {string} resCom - ответная команда на запрос 
  * @property {string} dest - имя источника, которому предназначается контент сообщения
  * @property {boolean} demandRes - флаг того, требует ли сообщение ответ, который будет ожидаться посредством async-await
  * @property {string|number} [hash] - хэш сообщения, генерируется автоматически либо передается в конструктор; во втором случае сообщению присваивается type = 'res'
  */
 /**
  * @class
- * Сообщение, предназначенное для передачи по шине фреймворка
+ * Класс, предназначенный для создания сообщений, передающихся по шине фреймворка. Обеспечивает автоматическое создание timestamp и хэш ключа для каждого сообщения.
+ * Предоставляет пля value и arg для для передачи любых типов значений и логического разделения значений, передающихся в сообщении.
  */
 class ClassBusMsg_S {
     /**
      * @constructor
      * @param {TypeBusMsgConstructor} _msg 
      */
-    constructor({ com, arg=[], value=[], source, dest, demandRes=false,  hash }) {
+    constructor({ com, arg=[], value=[], source, dest, demandRes=false, resCom, hash }) {
         this.timestamp = new Date().getTime(),
         this.metadata = {
             hash: hash ?? generateHash(),                // TODO: использовать библиотечную функцию
             type: hash ? MSG_TYPE_RESPONSE : MSG_TYPE_REQUEST,
             demandRes: Boolean(demandRes),
+            resCom,
             source: this.#GetStrOrErr('source', source),
             dest
         },
@@ -40,11 +42,15 @@ class ClassBusMsg_S {
     }
     /** утилитарные методы для работы с вх.данными */
     #GetStrOrErr(key, val) {
-        return (typeof val == 'string') ? val : new Error(`${key} must be a string`);
+        if (typeof val == 'string') 
+            return val;
+        throw new Error(`${key} must be a string`);
     }
 
     #GetArrOrErr(key, arr) {
-        return Array.isArray(arr) ? arr : new Error(`${key} must be an array`);
+        if (Array.isArray(arr)) 
+            return arr;
+        throw new Error(`${key} must be an array`);
     }
 
     #GetType(typeName) {
