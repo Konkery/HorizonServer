@@ -1,17 +1,8 @@
-const { ClassChannelSensor, ClassSensorInfo } = require('srvChannelSensor');
-const ClassBaseService_S = require('srvService');
+const { ClassChannelSensor, ClassSensorInfo } = require('./srvChannelSensor');
+const ClassBaseService_S = require('./srvService');
 
 /** КОНСТАНТЫ */
-const EVENT_INIT = 'all-init';
-const EVENT_REGISTER = 'register';
-const EVENT_DM_READY = 'dm-ready';
-const EVENT_DM_LIST_GET = 'dm-deviceslist-get';
-const EVENT_DM_CREATED = 'dm-created';
-const EVENT_CONNS_DONE = 'proc-connections-done';
-const EVENT_PMQTT_SEND = 'pmqtt-send';
-const EVENT_DM_NEW_CH = 'dm-new-ch';
-
-const COM_DEVLIST_GET = 'dm-deviceslist-get';
+const COM_DEVLIST_GET = 'deviceslist-get';
 const COM_SUB_SENS_ALL = 'dm-sub-sensorall';
 const COM_PWSC_SEND = 'proxywsc-send';
 const COM_PMQTT_SEND = 'proxymqtt-send';
@@ -20,32 +11,28 @@ const COM_PHUB_SEND = 'proxyhub-send';
 const GET_INFO_TIMEOUT = 3000;
 
 /********* списки топиков ******** */
-const EVENT_ON_LIST_SYSBUS = ['dm-connections-done'];
+const EVENT_ON_LIST_SYSBUS = ['all-connections-done'];
 const EVENT_ON_LIST_LHPBUS = ['dm-deviceslist-get'];
 const EVENT_ON_LIST_HUBBUS = ['dm-deviceslist-get'];
 /********************************* */
 
-const BUS_NAMES_LIST = ['sysBus', 'logBus', 'lhpBus', 'hubBus'];
+const MSG_DM_DEVLIST_GET    = { com: `dm-${COM_DEVLIST_GET}`, dest: 'dm' };
+const MSG_PHUB_DEVLIST_GET  = { com: `proxyhub-${COM_DEVLIST_GET}`, dest: 'proxyhub', demandRes: true };
+const MSG_PMQTT_DEVLIST_GET = { com: `proxymqtt-${COM_DEVLIST_GET}`, dest: 'proxymqtt', demandRes: true };
 
-const getSendTopic = (_sourceType) => {
-    return ({
-        lhp: COM_PWSC_SEND,
-        mqtt: COM_PMQTT_SEND,
-        hub: COM_PHUB_SEND
-    })[_sourceType];
-}
+const BUS_NAMES_LIST = ['sysBus', 'logBus', 'lhpBus', 'hubBus'];
 
 /**
  * @class
  * Реализует функционал службы для работы с измерительными каналами подключенного контроллера. Обеспечивает создание виртуальных двойников измерительных каналов, обработку их показаний, а также отправку команд 
  */
-class ClassDeviceManager extends ClassBaseService_S {
+class ClassDeviceManager_S extends ClassBaseService_S {
     #_SourcesState;
     #_GBusList;
     #_All_init1_msg;
     #_DevicesInfo;
     #_Channels = [];
-    #_DeviceInfo = [];              // список ClassSensorInfo
+    #_DeviceInfoList = [];              // список ClassSensorInfo
     #_GetInfoTimeout;               // таймер, который взводится при ожидании ответов на 'devicelist-get'
 
     #_ReqSent = 0;
@@ -104,16 +91,15 @@ class ClassDeviceManager extends ClassBaseService_S {
      * @param {[string]} info - массив идентификаторов измерительных каналов в формате <article>-<sensId>-<sensCh>
      * @param {string} sourceName - идентификатор источника данных
      */
-    async HandlerEvents_dm_devicelist_get(_topic, _msg) {
-        const { sensor, actuator } = _msg.val[0];
-        const source_name = _msg.arg;
-        this.#CreateChannels(sensor, source_name);
+    async HandlerEvents_dm_deviceslist_get(_topic, _msg) {
+        console.log(`dm | get deviceslist ${new Date().getTime()}`);
+        const msg_lhp = _msg.value[0];
+        const { sensor, actuator } = msg_lhp.value[0];
+        const source_name = _msg.arg[0];
+        this.#CreateChannelsFromDevlist(sensor, source_name);
         // соединение, с которого пришел ответ
-        const conn = this.#_SourcesState._Collection.find(conn => conn.Name == source_name);   //TODO collection ли
-        conn.CheckDM = true;
-        // подписка на показания каналов
-        const msg_to_plc = this.#CreateMsg_dm_sub_sensorall();
-        this.EmitEvents_proxy_send({ value: msg_to_plc, arg: [source_name] })
+        const source = this.#_SourcesState._Collection.find(_source => _source.Name == source_name);   //TODO collection ли
+        source.CheckDM = true;
 
         if (this.#_ResReceived === this.#_ReqSent)
             this.#ReadyCb();
@@ -125,19 +111,37 @@ class ClassDeviceManager extends ClassBaseService_S {
      * @param {object} sourcesInfo - информация о источниках/подключениях
      * @returns 
      */
-    async HandlerEvent_dm_connections_done(_topic, _msg) {
+    async HandlerEvents_all_connections_done(_topic, _msg) {
         if (this.#_GetInfoTimeout) {
             console.log(`DM | reqs are still processing`);
             return;
         }
 
         this.#_SourcesState._Collection
-            .filter(conn => conn.IsConnected && !conn.CheckDM)
-            .forEach(conn => {
-                const msg_to_plc = this.#CreateMsg_dm_devicelist_get();
-                this.EmitEvents_proxy_send({ value: msg_to_plc, arg: [conn.Name], demandRes: true });
+            .filter(_source => _source.IsConnected && !_source.CheckDM)
+            .forEach(async _source => {
+                if (_source.Type === 'lhp') {
+                    // отправка запроса с ожиданием ответа
+                    const res  = await this.EmitEvents_proxywsc_send({ 
+                        value: [MSG_DM_DEVLIST_GET], arg: [_source.Name], 
+                        demandRes: true, resCom: 'dm-deviceslist-get', opts: { timeout: 1000 } 
+                    });
+                    if (res) {
+                        // подписка на показания каналов
+                        const msg_to_plc = this.#CreateMsg_dm_sub_sensorall();
+                        this.EmitEvents_proxywsc_send({ value: [msg_to_plc], arg: [_source.Name] });
+                    }
+                }
+                if (_source.Type === 'mqtt') {
+                    this.EmitEvents_proxymqtt_deviceslist_get();
+                }
+                if (_source.Type === 'hub') {
+                    this.EmitEvents_proxyhub_deviceslist_get();
+                }
+                this.EmitEvents_logger_log({ level: 'INFO', 
+                    msg: `DM | req sent to ${_source.Name} total: ${++this.#_ReqSent}`});
+                console.log(`DM | req sent to ${_source.Name} total: ${++this.#_ReqSent}`);
             });
-            console.log(`DM | req sent to ${conn.Name} total: ${++this.#_ReqSent}`);
 
         // завершение ожидания по таймауту
         this.#_GetInfoTimeout = setTimeout(this.#ReadyCb.bind(this), GET_INFO_TIMEOUT);
@@ -149,12 +153,10 @@ class ClassDeviceManager extends ClassBaseService_S {
      * @description Завершает ожидание 'devicelist-get' и оповещает о имеющихся результатах 
      */
     #ReadyCb() {
-        this._BusList.sysBus.emit(EVENT_DM_READY, {
-            requests: this.#_ReqSent,
-            responses: this.#_ResReceived
-        });
-
         console.log(`DM | req: ${this.#_ReqSent} res: ${this.#_ResReceived}`);
+        this.EmitEvents_logger_log({ level: 'INFO', 
+            msg: `DM | req sent to ${_source.Name} total: ${++this.#_ReqSent}`
+        });
 
         // Обновление кол-ва каналов от каждого подключения
         this.#UpdateSourceChCount();
@@ -173,7 +175,7 @@ class ClassDeviceManager extends ClassBaseService_S {
      * @param {Object} ch 
      */
     #AddChannel(ch) {
-        if (this.IsIDUnique(ch.ID)) {
+        if (this.IsIDAvailable(ch.ID)) {
             this.#_Channels.push(ch);
         }
     }
@@ -196,9 +198,10 @@ class ClassDeviceManager extends ClassBaseService_S {
      * @returns {ClassSensorInfo}
      */
     #CreateDeviceInfo(_article) {
+        // this.EmitEvents_providermdb_get_info();
         // TODO
         // Обращение в БД 
-        return { _Article: _article };
+        return { Article: _article };
     }
 
     /**
@@ -207,10 +210,10 @@ class ClassDeviceManager extends ClassBaseService_S {
      * @param {[String]} _infoStrings - массив строк формата <article>-<sens_id>-<ch_num>
      * @param {String} _sourceName - идентификатор источника
      */
-    #CreateChannels(_infoStrings, _sourceName, _sourceType) {
+    #CreateChannelsFromDevlist(_infoStrings, _sourceName, _sourceType) {
         _infoStrings.forEach(infoString => {
             const [article, deviceId, chNum] = infoString.split('-');
-            this.#CreateCh({ article, deviceId, sourceId: _sourceName, chNum, sourceType: _sourceType });
+            this.#CreateChannel({ article, deviceId, sourceId: _sourceName, chNum });
         });
     }
     /**
@@ -219,7 +222,6 @@ class ClassDeviceManager extends ClassBaseService_S {
      * @property {string} deviceId
      * @property {string} sourceId
      * @property {number} chNum
-     * @property {string} sourceType
      */
     /**
      * @method
@@ -227,36 +229,48 @@ class ClassDeviceManager extends ClassBaseService_S {
      * @description Создает и сохраняет объект канала датчика 
      * @param {ChOpts} param0 
      */
-    #CreateCh({ article, deviceId, sourceId, chNum, sourceType: connType }) {
+    #CreateChannel({ article, deviceId, sourceId, chNum }) {
         // формирование id канала
         const ch_id = ClassChannelSensor.GetID(sourceId, deviceId, chNum);
         // получение/создание объекта SensorInfo
-        if (!this.#_DeviceInfo.find(dev => dev.Article === article))
-            this.#_DeviceInfo.push(this.#CreateDeviceInfo(article));     
-        
-        const device_info = this.#_DeviceInfo.find(dev => dev.Article === article);
+        let device_info = this.GetDeviceInfo(article);
         // получение конфига устройства
         const ch_config = this.GetChannelConfig(ch_id);
 
-        const bus_name_list = ['sysBus', 'logBus', 'dataBus' `${connType}Bus`];
-
-        const ch = new ClassChannelSensor({ 
-            _busNameList: bus_name_list, 
-            _busList: this.#_GBusList, 
-            _id: ch_id, 
-            _sensorInfo: device_info, 
-            _config: ch_config 
-        });
-        ch.EmitEvents_all_init1('all-init1', this.#_All_init1_msg);
+        const source_type = this.#_SourcesState._Collection.find(source => source.Name === sourceId).Type;
+        const bus_name_list = ['sysBus', 'logBus', 'dataBus', `${source_type}Bus`];
         
-        console.log(`DM | Create ch ${ch.ID}`);
-        this.#AddChannel(ch);
+        try {
+            const ch = new ClassChannelSensor({ 
+                _busNameList: bus_name_list, 
+                _busList: this.#_GBusList, 
+                _id: ch_id, 
+                _deviceInfo: device_info, 
+                _config: ch_config 
+            });
+            ch.HandlerEvents_all_init1('all-init1', this.#_All_init1_msg);
+        
+            this.#AddChannel(ch);
+            this.EmitEvents_logger_log({ level: 'ERROR', msg: `Created ch ${ch_id} successfully!`});
+            console.log(`DM | Create ch ${ch.ID}`);
+        } catch (e) {
+            this.EmitEvents_logger_log({ level: 'ERROR', msg: `Failed to create ch ${ch_id}`});
+        }
+        
     }
-
-    CreateStaticChannels(_channels) {
+    GetDeviceInfo(_article) {
+        return this.#_DeviceInfoList.find(dev => dev.Article === _article);
+    }
+    /**
+     * @method
+     * @public
+     * @description Создает список каналов датчиков/актуаторов по списку, полученному из БД
+     * @param {[ChOpts]} _channels 
+     */
+    CreateChannelsFromConfig(_channels) {
         _channels.forEach(ch => {
-            // const { article, deviceId, sourceId, chNum, connType } = _ch;
-            this.#CreateCh(ch);
+            // const { article, deviceId, sourceId, chNum } = _ch;
+            this.#CreateChannel(ch);
         });
     }
 
@@ -265,23 +279,25 @@ class ClassDeviceManager extends ClassBaseService_S {
      * @description Проверяет ID сенсора/актуатора и возвращает булевое значение, указывающее можно ли этот ID использовать.
      * @param {string} _id 
      */
-    IsIDUnique(_id) {
+    IsIDAvailable(_id) {
         return !Boolean(this.#_Channels.find(ch => ch.ID === _id));
     }
-
     /**
      * @method
-     * @description Отправляет запрос на получение списка каналов
-     * @param {object} _connectionId - идентификатор подключения
+     * @public
+     * @description Отправляет запрос на получение конфига измерительных устройств
+     * @returns 
      */
-    #CreateMsg_dm_devicelist_get({ arg }) {
-        const msg_to_plc = { com: COM_DEVLIST_GET };
-        return this.CreateMsg(msg_to_plc);
+    async EmitEvents_providermdb_get_device_config() {
+        // const config = _msg.value[0];
+        return { Article: 'unknown' };
     }
     /**
      * @typedef EmitEventsOpts
      * @property {[any]} [value] - сообщение (команда)
      * @property {[string]} [arg] - подключение-адресат
+     * @property {boolean} [demandRes] - требуется ли ответ
+     * @property {[string]} [resCom] - топик по которому придет ответ если demandRes == true
      */
     /**
      * @method
@@ -290,36 +306,59 @@ class ClassDeviceManager extends ClassBaseService_S {
      * @param {EmitEventsOpts} param0 
      * @returns 
      */
-    EmitEvents_proxy_send({ value, arg }) {
-        const source_name = arg[0];
-        const source_type = this.#_SourcesState._Collection.find(_source => _source.Name === source_name).Type;
-        const bus_name = `${source_type}Bus`;
-        const com = getSendTopic(source_type);
+    async EmitEvents_proxywsc_send({ value, arg, demandRes=false, resCom, opts }) {
         const msg = {
-            com,
-            arg,
-            value,
-            dest: 'proxywsc'
+            com: 'proxywsc-send',
+            arg,                            // source_name = arg[0]
+            value,                          // передаваемое сообщение
+            dest: 'proxywsc',
+            demandRes: true,
+            resCom
         }
-        return this.EmitMsg(bus_name, com, msg);
+        return this.EmitMsg('lhpBus', msg.com, msg, demandRes ? opts : undefined);
+    }
+    /**
+     * @method
+     * @public
+     * @description Отправляет запрос на получение списка каналов mqtt-источника
+     * @param {EmitEventsOpts} param0 
+     */
+    async EmitEvents_proxymqtt_deviceslist_get() {
+        return this.EmitMsg('mqttHub', 'proxymqtt-deviceslist-get', MSG_PMQTT_DEVLIST_GET, { timeout: 10000 });
+    }
+    /**
+     * @method
+     * @public
+     * @description Отправляет запрос на получение списка каналов Hub
+     * @param {EmitEventsOpts} param0 
+     */
+    async EmitEvents_proxyhub_deviceslist_get() {
+        return this.EmitMsg('hubBus', 'proxyhub-deviceslist-get', MSG_PHUB_DEVLIST_GET);
+    }
+
+    /**
+     * @method
+     * @description Отправляет запрос на получение списка каналов
+     * @param {object} _connectionId - идентификатор подключения
+     */
+    #CreateMsg_dm_devicelist_get() {
+        return msg_to_plc = { com: COM_DEVLIST_GET };
     }
     /**
      * @method
      * @description Выполнение подписки на DM контроллера
      * @param {EmitEventsOpts} param0 
      */
-    #CreateMsg_dm_sub({ arg }) {
-        const msg_to_plc = { com: 'dm-sub', dest: 'dm' };
-        return this.CreateMsg(msg_to_plc);
+    #CreateMsg_dm_sub() {
+        return { com: 'dm-sub', dest: 'dm' };
     }
     /**
      * @method
      * @description Отправляет подписку на обновление данных с контроллера по ws-соединению
      * @param {EmitEventsOpts} param0 
      */
-    #CreateMsg_dm_sub_sensorall({ arg }) {
-        const msg_to_plc = { com: COM_SUB_SENS_ALL, dest: 'dm' };
-        return this.CreateMsg(msg_to_plc);
+    #CreateMsg_dm_sub_sensorall() {
+        return { com: COM_SUB_SENS_ALL, dest: 'dm' };
     }
     /**
      * @method
@@ -329,8 +368,7 @@ class ClassDeviceManager extends ClassBaseService_S {
     #CreateMsg_dm_execute({ arg }) {
         // const [_chId, _methodName, ...args] = arg;
 
-        const msg_to_plc = { com: 'dm-execute', arg, dest: 'dm' };
-        return this.CreateMsg(msg_to_plc);
+        return { com: 'dm-execute', arg, dest: 'dm' };
     }
     /**
      * @method
@@ -348,10 +386,10 @@ class ClassDeviceManager extends ClassBaseService_S {
      * @description Обновляет кол-во каналов от каждого подключения
      */
     #UpdateSourceChCount() {
-        this.#_SourcesState._Collection.forEach(conn => {
-            conn.ChFactual = this.#_Channels.filter(ch => ch.SourceName === conn.ExpectName).length;
+        this.#_SourcesState._Collection.forEach(_source => {
+            _source.ChFactual = this.#_Channels.filter(ch => ch.SourceId === _source.Name).length;
         });
     }
 }
 
-module.exports = ClassDeviceManager;
+module.exports = ClassDeviceManager_S;
