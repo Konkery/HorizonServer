@@ -74,7 +74,7 @@ class ClassChannelSensor extends ClassBaseService_S {
     #_ChNum;           //номер канала (начиная с 0)
     #_ChangeThreshold;
 
-    #_SensorInfo = null;
+    #_DeviceInfo = null;
     #_Transform   = null;
     #_Suppression = null;
     #_Filter = null;
@@ -84,11 +84,11 @@ class ClassChannelSensor extends ClassBaseService_S {
      * @param {ClassSensorInfo} _sensorInfo - ссылка на основной объект датчика
      * @param {Number} num - номер канала
      */
-    constructor({ _busList, _busNameList, _id, _sensorInfo, _config }) {
+    constructor({ _busList, _busNameList, _id, _deviceInfo, _config }) {
         super({ _name: _id, _busNameList, _busList });
         const [sourceId, deviceId, chNum] = _id.split('-');
 
-        this.#_SensorInfo = _sensorInfo;      //ссылка на объект физического датчика
+        this.#_DeviceInfo = _deviceInfo;      //ссылка на объект физического датчика
         /** Основные поля */
         this.#_Value = 0;
         // TODO: обновление status по событиям
@@ -110,13 +110,13 @@ class ClassChannelSensor extends ClassBaseService_S {
         const topic_get_data_raw = `${this.ID}-get-data-raw`;
         // инициализация метода-обработчика на прием данных
         this[`HandlerEvents_${topic_get_data_raw}`] = ((_topic, _msg) => {
-            this.Value = _msg.value[0];
+            this.Value = _msg.value?.value[0];
         }).bind(this);
         // подписка на топик
         if (this.#_SourceBus)
             this.FillEventOnList(sourceBus.Name, [topic_get_data_raw]);
     }
-    get Info()        { return this.#_SensorInfo; }
+    get Info()        { return this.#_DeviceInfo; }
 
     get Alarms()      { return this.#_Alarms; }
 
@@ -133,7 +133,7 @@ class ClassChannelSensor extends ClassBaseService_S {
      */
     get ID() { return ClassChannelSensor.GetID(this.#_SourceId, this.#_DeviceId, this.#_ChNum); }
 
-    get SourceName() { return this.#_SourceId; }
+    get SourceID() { return this.#_SourceId; }
     
     /**
      * @getter
@@ -274,7 +274,7 @@ class ClassChannelSensor extends ClassBaseService_S {
      * @returns {Boolean} 
      */
     Start(_period, _opts) {
-        return this.#_SensorInfo.Start(this.#_ChNum, _period, _opts);
+        return this.#_DeviceInfo.Start(this.#_ChNum, _period, _opts);
     }
 
     /**
@@ -282,7 +282,7 @@ class ClassChannelSensor extends ClassBaseService_S {
      * Метод предназначен для прекращения считывания значений с заданного канала. В случаях, когда значения данного канала считываются синхронно с другими, достаточно прекратить обновление данных.
      */
     Stop() { 
-        return this.#_SensorInfo.Stop(this.#_ChNum); 
+        return this.#_DeviceInfo.Stop(this.#_ChNum); 
     }
 
     /**
@@ -291,7 +291,7 @@ class ClassChannelSensor extends ClassBaseService_S {
      * @param {Number} _period - новый период опроса.
      */
     ChangeFreq(_period) { 
-        return this.#_SensorInfo.ChangeFreq(this.#_ChNum, _period); 
+        return this.#_DeviceInfo.ChangeFreq(this.#_ChNum, _period); 
     }
 
     /**
@@ -300,7 +300,7 @@ class ClassChannelSensor extends ClassBaseService_S {
      * @param {Object} [_opts] - объект с конфигурационными параметрами.
      */
     Configure(_opts) {
-        return this.#_SensorInfo.Configure(this.#_ChNum, _opts);
+        return this.#_DeviceInfo.Configure(this.#_ChNum, _opts);
     }
 
     /**
@@ -309,7 +309,7 @@ class ClassChannelSensor extends ClassBaseService_S {
      * @param {Object} _opts - параметры запроса информации.
      */
     GetInfo(_opts) { 
-        return this.#_SensorInfo.GetInfo(this.#_ChNum, _opts); 
+        return this.#_DeviceInfo.GetInfo(this.#_ChNum, _opts); 
     }
 
     /**
@@ -318,7 +318,7 @@ class ClassChannelSensor extends ClassBaseService_S {
      * @param {Object} _opts - параметры перезагрузки.  
      */
     Reset(_opts) { 
-        return this.#_SensorInfo.Reset(this.#_ChNum, _opts); 
+        return this.#_DeviceInfo.Reset(this.#_ChNum, _opts); 
     }
 
     /**
@@ -327,7 +327,7 @@ class ClassChannelSensor extends ClassBaseService_S {
      * @param {Object} _opts - объект с конфигурационными параметрами
      */
     Calibrate(_opts) {
-        return this.#_SensorInfo.Calibrate(this.#_ChNum, _opts);
+        return this.#_DeviceInfo.Calibrate(this.#_ChNum, _opts);
     }
 
     /**
@@ -336,7 +336,7 @@ class ClassChannelSensor extends ClassBaseService_S {
      * @param {Number | String} _rep - значение повторяемости.
      */
     SetRepeatability(_rep) { 
-        return this.#_SensorInfo.SetRepeatability(this.#_ChNum, _rep); 
+        return this.#_DeviceInfo.SetRepeatability(this.#_ChNum, _rep); 
     }
 
     /**
@@ -345,7 +345,7 @@ class ClassChannelSensor extends ClassBaseService_S {
      * @param {Number | String} _pres - значение точности.
      */
     SetPrecision(_pres) { 
-        return this.#_SensorInfo.SetPrecision(this.#_ChNum, _pres); 
+        return this.#_DeviceInfo.SetPrecision(this.#_ChNum, _pres); 
     }
     #GetServiceName(_id) {
         return `${_id}`;
