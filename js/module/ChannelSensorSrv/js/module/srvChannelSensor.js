@@ -18,11 +18,12 @@ class ClassSensorInfo {
      * @constructor
      * @param {SensorOptsType} _opts - объект с описательными характеристиками датчика и параметрами, необходимых для обеспечения работы датчика
      */
-    constructor(_opts) { 
-        this._Name         = _opts.name; 
-        this._Article      = _opts.article;
-        this._ModuleName   = _opts.moduleName;
-        this._Type         = _opts.type;
+    constructor(_opts={ name: 'unknown', article: 'unknown', 
+        moduleName: 'unknown', type: 'unknown', channelNames:[] }) {
+        this._Name = _opts.name;
+        this._Article = _opts.article;
+        this._ModuleName = _opts.moduleName;
+        this._Type = _opts.type;
         this._ChannelNames = _opts.channelNames;
 
         this.CheckProps();
@@ -39,11 +40,9 @@ class ClassSensorInfo {
         const isNumberPositive = (p) => typeof p === 'number' && p > 0;
         //#endregion
 
-        if (!isStringNonEmpty(this._IdSource))          throw new Error(`Invalid _IdSource`);
-        if (!isStringNonEmpty(this._Article))           throw new Error(`Invalid _Article`);
-        if (!isStringNonEmpty(this._Name))              throw new Error(`Invalid _Name`);
-        if (!isStringNonEmpty(this._Type))              throw new Error(`Invalid _Type`);
-        if (!isNumberPositive(this._QuantityChannel))   throw new Error(`Invalid _QuantityChannel`);
+        if (!isStringNonEmpty(this._Article)) throw new Error(`Invalid _Article`);
+        if (!isStringNonEmpty(this._Name)) throw new Error(`Invalid _Name`);
+        if (!isStringNonEmpty(this._Type)) throw new Error(`Invalid _Type`);
     }
 }
 
@@ -55,11 +54,11 @@ class ClassChannelSensor extends ClassBaseService_S {
     #_SourceBus;
 
     #_ValueBuffer = {
-        _depth : 1,
-        _rawVal : undefined,
-        _arr : [],
-    
-        push: function(_val) {
+        _depth: 1,
+        _rawVal: undefined,
+        _arr: [],
+
+        push: function (_val) {
             this._rawVal = _val;
             while (this._arr.length >= this._depth) {
                 this._arr.shift();
@@ -75,7 +74,7 @@ class ClassChannelSensor extends ClassBaseService_S {
     #_ChangeThreshold;
 
     #_DeviceInfo = null;
-    #_Transform   = null;
+    #_Transform = null;
     #_Suppression = null;
     #_Filter = null;
     #_Alarms = null;
@@ -84,49 +83,41 @@ class ClassChannelSensor extends ClassBaseService_S {
      * @param {ClassSensorInfo} _sensorInfo - ссылка на основной объект датчика
      * @param {Number} num - номер канала
      */
-    constructor({ _busList, _busNameList, _id, _deviceInfo, _config }) {
-        super({ _name: _id, _busNameList, _busList });
-        const [sourceId, deviceId, chNum] = _id.split('-');
+    constructor({ _busList, _busNameList }, _chOpts) {
+        const { sourceId, deviceId, chNum } = _chOpts;
+        // имя службы идентично id канала
+        const service_name = ClassChannelSensor.GetID(sourceId, deviceId, chNum);
+        super({ _name: service_name, _busNameList, _busList });
 
-        this.#_DeviceInfo = _deviceInfo;      //ссылка на объект физического датчика
+        this.#_DeviceInfo = new ClassSensorInfo(_chOpts.sensorInfo);      //ссылка на объект физического датчика
         /** Основные поля */
         this.#_Value = 0;
         // TODO: обновление status по событиям
         this.#_Status = 1;
         this.#_SourceId = sourceId;
         this.#_DeviceId = deviceId;
-        this.#_ChNum    = +chNum;             //номер канала (начиная с 0)
+        this.#_ChNum = +chNum;             //номер канала (начиная с 0)
         this.#_ChangeThreshold = 1;
-        /** Флаги */
+        // флаги
         this._DataUpdated = false;
         this._DataWasRead = false;
         this._TimeStamp;
-        /****** */
-        this.SetupConfig(_config);
-        // получение имени шины, которая связывает канал с источником
-        this.#_SourceBus = Object.values(_busList).find(_bus => 
-            _bus.Name !=='sysBus' && _bus.Name !== 'logBus' && _bus.Name !== 'dataBus');
-        // топик по которому будут поступать сырые данные
-        const topic_get_data_raw = `${this.ID}-get-data-raw`;
-        // инициализация метода-обработчика на прием данных
-        this[`HandlerEvents_${topic_get_data_raw}`] = ((_topic, _msg) => {
-            this.Value = _msg.value?.value[0];
-        }).bind(this);
-        // подписка на топик
-        if (this.#_SourceBus)
-            this.FillEventOnList(sourceBus.Name, [topic_get_data_raw]);
+        // настройка функций мат.обработки
+        this.SetupConfig(_chOpts.config);
+        // добавление метода-обработчика на получение данных
+        this.#SetupService({ _busList, _busNameList });
     }
-    get Info()        { return this.#_DeviceInfo; }
+    get DeviceInfo() { return this.#_DeviceInfo; }
 
-    get Alarms()      { return this.#_Alarms; }
+    get Alarms() { return this.#_Alarms; }
 
     get Suppression() { return this.#_Suppression; }
 
-    get Transform()   { return this.#_Transform; }
+    get Transform() { return this.#_Transform; }
 
-    get Filter()      { return this.#_Filter; }
+    get Filter() { return this.#_Filter; }
 
-    static GetID(_sourceId, _deviceId, _chNum) { return `${_sourceId}-${_deviceId}-${('0'+_chNum).slice(-2)}`; }    
+    static GetID(_sourceId, _deviceId, _chNum) { return `${_sourceId}-${_deviceId}-${('0' + _chNum).slice(-2)}`; }
     /**
      * @getter
      * Возвращает уникальный идентификатор канала
@@ -134,7 +125,7 @@ class ClassChannelSensor extends ClassBaseService_S {
     get ID() { return ClassChannelSensor.GetID(this.#_SourceId, this.#_DeviceId, this.#_ChNum); }
 
     get SourceID() { return this.#_SourceId; }
-    
+
     /**
      * @getter
      * Возвращает статус измерительного канала: 0 - не опрашивается, 1 - опрашивается, 2 - в переходном процессе
@@ -152,8 +143,8 @@ class ClassChannelSensor extends ClassBaseService_S {
      * @getter
      * Возвращает установленный для канала порог изменения - процент, на который должно измениться Value чтобы SM считал его новым.
      */
-    get ChangeThreshold () { 
-        return this.#_ChangeThreshold; 
+    get ChangeThreshold() {
+        return this.#_ChangeThreshold;
     }
 
     /**
@@ -235,8 +226,8 @@ class ClassChannelSensor extends ClassBaseService_S {
      * @description Конфигурирует обработку данных на канале 
      * @param {ChConfigOpts} _config 
      */
-    SetupConfig(_config={}) {
-        this.#_Transform   = new ClassTransform(_config.transform);
+    SetupConfig(_config = {}) {
+        this.#_Transform = new ClassTransform(_config.transform);
         this.#_Suppression = new ClassSuppression(_config.suppression);
         this.#_Filter = new ClassFilter();
         this._Alarms = null;
@@ -246,11 +237,26 @@ class ClassChannelSensor extends ClassBaseService_S {
         }
         this.AvgCapacity = _config.avgCapacity ?? 1;
     }
-
+    
+    #SetupService({ _busList, _busNameList}) {
+        // получение имени шины, которая связывает канал с источником
+        const source_bus_name = _busNameList.find(_busName =>
+            _busName !== 'sysBus' && _busName !== 'logBus' && _busName !== 'dataBus');
+        this.#_SourceBus = _busList[source_bus_name];
+        // топик по которому будут поступать сырые данные
+        const topic_get_data_raw = `${this.ID}-get-data-raw`;
+        const handler_name = `HandlerEvents_${topic_get_data_raw.split('-').join('_')}`;
+        // инициализация метода-обработчика на прием данных
+        this[handler_name] = ((_topic, _msg) => {
+            this.Value = _msg.value[0]?.value[0];
+        }).bind(this);
+        // подписка на топик
+        this.FillEventOnList(this.#_SourceBus.Name, [topic_get_data_raw]);
+    }
     /**
      * @method
      * Инициализирует ClassAlarms в полях объекта.  
-     */ 
+     */
     EnableAlarms() {
         this._Alarms = new ClassAlarms(this);
     }
@@ -281,8 +287,8 @@ class ClassChannelSensor extends ClassBaseService_S {
      * @method
      * Метод предназначен для прекращения считывания значений с заданного канала. В случаях, когда значения данного канала считываются синхронно с другими, достаточно прекратить обновление данных.
      */
-    Stop() { 
-        return this.#_DeviceInfo.Stop(this.#_ChNum); 
+    Stop() {
+        return this.#_DeviceInfo.Stop(this.#_ChNum);
     }
 
     /**
@@ -290,8 +296,8 @@ class ClassChannelSensor extends ClassBaseService_S {
      * Метод предназначен для остановки опроса указанного канала и его последующего запуска с новой частотой. Возобновление должно касаться всех каналов, которые опрашивались до остановки.
      * @param {Number} _period - новый период опроса.
      */
-    ChangeFreq(_period) { 
-        return this.#_DeviceInfo.ChangeFreq(this.#_ChNum, _period); 
+    ChangeFreq(_period) {
+        return this.#_DeviceInfo.ChangeFreq(this.#_ChNum, _period);
     }
 
     /**
@@ -308,8 +314,8 @@ class ClassChannelSensor extends ClassBaseService_S {
      * Метод предназначен для предоставления дополнительных сведений об измерительном канале или физическом датчике.
      * @param {Object} _opts - параметры запроса информации.
      */
-    GetInfo(_opts) { 
-        return this.#_DeviceInfo.GetInfo(this.#_ChNum, _opts); 
+    GetInfo(_opts) {
+        return this.#_DeviceInfo.GetInfo(this.#_ChNum, _opts);
     }
 
     /**
@@ -317,8 +323,8 @@ class ClassChannelSensor extends ClassBaseService_S {
      * Метод предназначен для выполнения перезагрузки датчика.
      * @param {Object} _opts - параметры перезагрузки.  
      */
-    Reset(_opts) { 
-        return this.#_DeviceInfo.Reset(this.#_ChNum, _opts); 
+    Reset(_opts) {
+        return this.#_DeviceInfo.Reset(this.#_ChNum, _opts);
     }
 
     /**
@@ -335,8 +341,8 @@ class ClassChannelSensor extends ClassBaseService_S {
      * Метод предназначен для установки значения повторяемости измерений.
      * @param {Number | String} _rep - значение повторяемости.
      */
-    SetRepeatability(_rep) { 
-        return this.#_DeviceInfo.SetRepeatability(this.#_ChNum, _rep); 
+    SetRepeatability(_rep) {
+        return this.#_DeviceInfo.SetRepeatability(this.#_ChNum, _rep);
     }
 
     /**
@@ -344,8 +350,8 @@ class ClassChannelSensor extends ClassBaseService_S {
      * Метод предназначен для установки точности измерений.
      * @param {Number | String} _pres - значение точности.
      */
-    SetPrecision(_pres) { 
-        return this.#_DeviceInfo.SetPrecision(this.#_ChNum, _pres); 
+    SetPrecision(_pres) {
+        return this.#_DeviceInfo.SetPrecision(this.#_ChNum, _pres);
     }
     #GetServiceName(_id) {
         return `${_id}`;
@@ -358,7 +364,7 @@ class ClassChannelSensor extends ClassBaseService_S {
 class ClassFilter {
     #_FilterFunc;
     constructor() {
-        this.#_FilterFunc = (arr) => arr[arr.length-1];
+        this.#_FilterFunc = (arr) => arr[arr.length - 1];
     }
     /**
      * @method
@@ -378,7 +384,7 @@ class ClassFilter {
      */
     SetFunc(_func) {
         if (!_func) {        //если _func не определен, то устанавливается функция-фильтр по-умолчанию
-            this.#_FilterFunc = (arr) => arr[arr.length-1];
+            this.#_FilterFunc = (arr) => arr[arr.length - 1];
             return true;
         }
         if (typeof _func !== 'function') throw new Error('Not a function');
@@ -410,7 +416,7 @@ class ClassTransform {
             return true;
         }
         if (typeof _func !== 'function') return false;
-        this.#_TransformFunc= _func;
+        this.#_TransformFunc = _func;
         return true;
     }
     /**
@@ -421,9 +427,9 @@ class ClassTransform {
      */
     SetLinearFunc(_k, _b) {
         if (typeof _k !== 'number' || typeof _b !== 'number') throw new Error('k and b must be values');
-        this.#_TransformFunc = (x) => _k * x + _b; 
+        this.#_TransformFunc = (x) => _k * x + _b;
         return true;
-    } 
+    }
     /**
      * @method
      * Возвращает значение, преобразованное линейной функцией
@@ -443,7 +449,7 @@ class ClassSuppression {
         this._Low = -Infinity;
         this._High = Infinity;
         if (_opts)
-            this.SetLim(_opts.low, _opts.high);  
+            this.SetLim(_opts.low, _opts.high);
     }
     /**
      * @method
@@ -466,9 +472,9 @@ class ClassSuppression {
      * @returns {Number}
      */
     SuppressValue(_val) {
-        return _val > this._High ? this._High 
-             : _val < this._Low  ? this._Low
-             : _val;
+        return _val > this._High ? this._High
+            : _val < this._Low ? this._Low
+                : _val;
     }
 }
 
@@ -513,7 +519,7 @@ class ClassAlarms {
      */
     SetDefault() {
         this._Zones = [];
-        this._Callbacks = new Array(5).fill((ch, z) => {});
+        this._Callbacks = new Array(5).fill((ch, z) => { });
         this._CurrZone = 'green';
     }
     /**
@@ -542,21 +548,21 @@ class ClassAlarms {
         if (!this.CheckOpts(_opts)) return false;
 
         if (_opts.yellow) {
-            this._Zones[indexes.yelLow]  = _opts.yellow.low;
+            this._Zones[indexes.yelLow] = _opts.yellow.low;
             this._Zones[indexes.yelHigh] = _opts.yellow.high;
-            this.SetCallback(indexes.yelLow,  _opts.yellow.cbLow);     
+            this.SetCallback(indexes.yelLow, _opts.yellow.cbLow);
             this.SetCallback(indexes.yelHigh, _opts.yellow.cbHigh);
         }
         if (_opts.red) {
-            this._Zones[indexes.redLow]  = _opts.red.low;
+            this._Zones[indexes.redLow] = _opts.red.low;
             this._Zones[indexes.redHigh] = _opts.red.high;
-            this.SetCallback(indexes.redLow,  _opts.red.cbLow);
+            this.SetCallback(indexes.redLow, _opts.red.cbLow);
             this.SetCallback(indexes.redHigh, _opts.red.cbHigh);
         }
         if (_opts.green) {
             this.SetCallback(indexes.green, _opts.green.cb);
         }
-    } 
+    }
     /**
      * @method
      * Проверяет корректность переданных настроек зон измерения и алармов
@@ -569,23 +575,23 @@ class ClassAlarms {
 
         if (yellow) {
             if (yellow.low >= yellow.high ||                            //если нижняя граница выше верхней
-                yellow.cbLow  && typeof yellow.cbLow !== 'function' ||   //коллбэк передан но не является функцией
+                yellow.cbLow && typeof yellow.cbLow !== 'function' ||   //коллбэк передан но не является функцией
                 yellow.cbHigh && typeof yellow.cbHigh !== 'function') return false;
 
             if (opts.red) {                         //если переданы настройки красной зоны, сравниваем с ними
-                if (yellow.low < red.low || yellow.high > red.high) 
+                if (yellow.low < red.low || yellow.high > red.high)
                     return false;
             }                                       //иначе сравниваем с текущими значениями
-            else if (yellow.low < this._Zones[indexes.redLow] || yellow.high > this._Zones[indexes.redHigh]) 
+            else if (yellow.low < this._Zones[indexes.redLow] || yellow.high > this._Zones[indexes.redHigh])
                 return false;
         }
         if (red) {
             if (red.low >= red.high ||                                  //если нижняя граница выше верхней
-                red.cbLow  && typeof red.cbLow !== 'function' ||         //коллбэк передан но не является функцией
+                red.cbLow && typeof red.cbLow !== 'function' ||         //коллбэк передан но не является функцией
                 red.cbHigh && typeof red.cbHigh !== 'function') return false;
 
             if (!yellow) {                          //если не переданы настройки желтой зоны, сравниваем с текущими
-                if (opts.red.low > this._Zones[indexes.yelLow] || opts.red.high < this._Zones[indexes.yelHigh]) 
+                if (opts.red.low > this._Zones[indexes.yelLow] || opts.red.high < this._Zones[indexes.yelHigh])
                     return false;
             }
         }
@@ -598,11 +604,11 @@ class ClassAlarms {
      */
     CheckZone(val) {
         let prevZone = this._CurrZone;
-        this._CurrZone = val < this._Zones[indexes.redLow]  ? 'redLow'
-                       : val > this._Zones[indexes.redHigh] ? 'redHigh'
-                       : val < this._Zones[indexes.yelLow]  ? 'yelLow'
-                       : val > this._Zones[indexes.yelHigh] ? 'yelHigh'
-                       : 'green';
+        this._CurrZone = val < this._Zones[indexes.redLow] ? 'redLow'
+            : val > this._Zones[indexes.redHigh] ? 'redHigh'
+                : val < this._Zones[indexes.yelLow] ? 'yelLow'
+                    : val > this._Zones[indexes.yelHigh] ? 'yelHigh'
+                        : 'green';
 
         if (prevZone !== this._CurrZone) {
             this._Callbacks[indexes[this._CurrZone]](this._Channel, prevZone);
