@@ -137,6 +137,7 @@ class ClassBaseService_S {
         this.#AddHandlerEvents(_busName);
         // наполнение _HandleFunc ссылками на методы-обработчики переданных событий
         this.#PackHandlerFunc(_busName);
+        console.log(`${this.Name} | ${_busName} | EventOnList topics: ${this.#_EventOnList[_busName].filter(e => e.on).map(e => e.name).join(', ')}`);
     }
     /**
      * @method
@@ -164,15 +165,14 @@ class ClassBaseService_S {
      */
     #CreateBusHandler(_busName) {
         return ((_topic, _msg) => {
-            console.log(`${this.Name} | ${_topic}  ${_msg}`);
             try {
                 const { type } = _msg.metadata; 
                 // если получен ответ на запрос
                 if (type === MSG_CONST.MSG_TYPE_RESPONSE) {
                     const { hash } = _msg.metadata;
                     // ищем в контейнере по хэшу
-                    console.log(`look for hash ${hash}`);
-                    this.#_PromiseList[hash]?.(true);
+                    const resolve = this.#_PromiseList[hash];
+                    resolve?.(true);
                 }
             } catch (e) {
                 console.log(`Error while processing msg ${_topic}`);
@@ -195,9 +195,7 @@ class ClassBaseService_S {
             // обращение к агрегатному обработчику шины
             this.#_BusHandlerList[_busName] ??= this.#CreateBusHandler(_busName).bind(this);
             const busHandler = this.#_BusHandlerList[_busName];
-
             // подписка агрегатного обработчика на топик
-            console.log(`${this.Name} | AddHandlerEvents | add handler on topic ${topic}`);
             this.#_BusList[_busName]?.on(topic, _msg => busHandler(topic, _msg));
             _event.on = true;
         });
@@ -250,7 +248,6 @@ class ClassBaseService_S {
      * @param {object} _msg 
      */
     HandlerEvents_all_init1(_topic, _msg) {
-        console.log(`super HandlerEvents_all_init1`);
         const { ServicesState } = _msg.arg[0];
         this.#_ServicesState ??= ServicesState;
         this.#_ServicesState.SetServiceObject(this.Name, this);
@@ -269,7 +266,6 @@ class ClassBaseService_S {
         if (index > -1) {
             ClassBaseService_S.#_InstancedNameList.splice(index, 1);
         }
-        console.log(`${this.Name} | all-close`);
         // TODO: обращение к ServicesState
         this.#_EventOnList    = {}; // коллекция всех событий, которые слушает служба по шине (ключ - имя шины)
                                     // { имя_шины1: [ { topic1, on }, { topic2, on} ... ]}
@@ -322,7 +318,7 @@ class ClassBaseService_S {
         this.#_BusList[NR_BUS_NAME]?.emit(topic, payload);
     }
     /**
-     * @typedef MsgOpts
+     * @typedef TypeMsgOpts
      * @property {string} com
      * @property {[any]} [arg]
      * @property {[any]} [value]
@@ -334,7 +330,7 @@ class ClassBaseService_S {
      * @public
      * @description создает и возвращает объект сообщения
      * @description Создает объект класса BusMsg
-     * @param {MsgOpts} _msgOpts
+     * @param {TypeMsgOpts} _msgOpts
      * @returns
      */
     CreateMsg(_msgOpts) {
@@ -344,15 +340,21 @@ class ClassBaseService_S {
             return new ClassBusMsg_S(_msgOpts);
         } catch (e) {
             this.EmitEvents_logger_log({ level: 'WARN', msg: `BusMsg | ${e}` });
-            console.log(`BusMsg | ${e}`);
+            console.log(`Error while creating msg ${_msgOpts}`);
             return null;
         }
     }
     /**
+     * @typedef TypeLogOpts
+     * @property {string} level
+     * @property {string} msg
+     * @property {Error} err
+     */
+    /**
      * @method
      * @public
      * @description Предназначен для отправки сообщений на логгер. В arg указывается уровень сообщения, а в value - сообщение 
-     * @param {EmitEventsOpts} param0 
+     * @param {TypeLogOpts} param0 
      */
     EmitEvents_logger_log({ level, msg }) {
         const argsValid = typeof level === 'string' && typeof msg === 'string';
@@ -376,7 +378,7 @@ class ClassBaseService_S {
      * @description Отправка сообщения на шину
      * @param {string} _busName 
      * @param {string} _topic 
-     * @param {MsgOpts} _msg 
+     * @param {TypeMsgOpts} _msg 
      * @param {EmitMsgOpts} _opts 
      * @returns 
      */
@@ -408,27 +410,19 @@ class ClassBaseService_S {
      */
     #CreatePromise(_msgHash, _opts) {
         return new Promise((res, rej) => { 
-            /* debughome */
-            const t1 = new Date().getTime();
-            console.log(`created prom | ${_msgHash} | ${t1}`);
-            /* debugend */
             // время, не позднее которого промис удет разрешен
             const timeout_ms = _opts?.timeout ?? DFLT_SEND_TIMEOUT;
             // запуск таймаута
             const timeout = setTimeout(() => {
-                /* debughome */
-                const t2 = new Date().getTime();
-                console.log(`promise res | ${_msgHash} | ${t2-t1}`);
-                /* debugend */
                 res(false);
                 delete this.#_PromiseList[_msgHash];
             }, timeout_ms);
             // по хэшу присваивается функция, вызов которой разрешит промис и выключит таймаут
-            this.#_PromiseList[_msgHash] = () => {
-                res();
+            this.#_PromiseList[_msgHash] = (_result) => {
+                res(_result);
                 clearTimeout(timeout);
                 delete this.#_PromiseList[_msgHash];
-            };      
+            };
         });
     }
 }
