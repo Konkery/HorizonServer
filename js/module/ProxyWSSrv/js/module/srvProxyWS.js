@@ -1,5 +1,5 @@
 const { hash } = require('crypto');
-const ClassBaseService_S = require('./srvService');
+const ClassBaseService_S = require('srvService');
 
 const KEEP_ALIVE_HASH = 5000;
 
@@ -17,7 +17,7 @@ const BUS_NAME_LIST = ['sysBus', 'logBus', 'lhpBus'];
  * - передачу сообщений, полученных от WSC, системным службам  
  * - обработку запросов и сообщений со сторону служб 
  */
-class ClassProxyWSClient extends ClassBaseService_S {
+class ClassProxyWSClient_S extends ClassBaseService_S {
     #_SourcesState;
     #_RequestList = {};
     /**
@@ -129,4 +129,4 @@ class ClassProxyWSClient extends ClassBaseService_S {
     }
 }
 
-module.exports = ClassProxyWSClient;
+module.exports = ClassProxyWSClient_S;
