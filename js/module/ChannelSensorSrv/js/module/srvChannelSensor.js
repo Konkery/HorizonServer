@@ -1,3 +1,5 @@
+const COM_GET_DATA_RAW = 'all-get-data-raw';
+const COM_CH_ALARM = 'all-ch-alarm;
 /**
  * @typedef SensorOptsType 
  * @property {String} name
@@ -28,8 +30,13 @@ class ClassSensorInfo {
 
         this.CheckProps();
     }
+
     get Name() { return this._Name; }
+
     get Article() { return this._Article; }
+
+    get ChannelNames() { return this._ChannelNames; }
+
     /**
      * @method
      * Метод проверяет корректность полей объекта
@@ -48,7 +55,7 @@ class ClassSensorInfo {
 
 /**
  * @class
- * Класс, представляющий каждый отдельно взятый канал датчика.
+ * @description Класс, представляющий каждый отдельно взятый канал датчика в качестве службы фреймворка.
  */
 class ClassChannelSensor extends ClassBaseService_S {
     #_SourceBus;
@@ -68,7 +75,7 @@ class ClassChannelSensor extends ClassBaseService_S {
     };
     #_Value;
     #_Status;
-    #_SourceId;
+    #_SourceName;
     #_DeviceId;
     #_ChNum;           //номер канала (начиная с 0)
     #_ChangeThreshold;
@@ -78,23 +85,36 @@ class ClassChannelSensor extends ClassBaseService_S {
     #_Suppression = null;
     #_Filter = null;
     #_Alarms = null;
+
     /**
-     * @constructor
-     * @param {ClassSensorInfo} _sensorInfo - ссылка на основной объект датчика
-     * @param {Number} num - номер канала
+     * @typedef TypeServiceOpts
+     * @property {[ClassBus_S]} _busList
+     * @property {[string]} _busNameList
      */
-    constructor({ _busList, _busNameList }, _chOpts) {
-        const { sourceId, deviceId, chNum } = _chOpts;
+    /**
+     * @typedef TypeChOpts
+     * @property {string} sourceName, 
+     * @property {string} deviceId 
+     * @property {number} chNum
+     */
+    /**
+     * @constructor 
+     * @param {TypeServiceOpts} _serviceOpts 
+     * @param {TypeChOpts} _chOpts 
+     * @param {ClassSensorInfo} _deviceInfo 
+     */
+    constructor({ _busList, _busNameList }, _chOpts, _deviceInfo) {
+        const { SourceName: sourceName, DeviceId: deviceId, ChNum: chNum } = _chOpts;
         // имя службы идентично id канала
-        const service_name = ClassChannelSensor.GetID(sourceId, deviceId, chNum);
+        const service_name = ClassChannelSensor.GetID(sourceName, deviceId, chNum);
         super({ _name: service_name, _busNameList, _busList });
 
-        this.#_DeviceInfo = new ClassSensorInfo(_chOpts.sensorInfo);      //ссылка на объект физического датчика
+        this.#_DeviceInfo = _deviceInfo ?? new ClassSensorInfo(_chOpts.sensorInfo);      //ссылка на объект физического датчика
         /** Основные поля */
         this.#_Value = 0;
         // TODO: обновление status по событиям
         this.#_Status = 1;
-        this.#_SourceId = sourceId;
+        this.#_SourceName = sourceName;
         this.#_DeviceId = deviceId;
         this.#_ChNum = +chNum;             //номер канала (начиная с 0)
         this.#_ChangeThreshold = 1;
@@ -103,10 +123,15 @@ class ClassChannelSensor extends ClassBaseService_S {
         this._DataWasRead = false;
         this._TimeStamp;
         // настройка функций мат.обработки
-        this.SetupConfig(_chOpts.config);
-        // добавление метода-обработчика на получение данных
-        this.#SetupService({ _busList, _busNameList });
+        this.SetupConfig(_chOpts.Config);
+        // получение имени шины, которая связывает канал с источником
+        const source_bus_name = _busNameList.find(_busName =>
+            _busName !== 'sysBus' && _busName !== 'logBus' && _busName !== 'dataBus');
+        this.#_SourceBus = _busList[source_bus_name];
+        // подписка на топик
+        this.FillEventOnList(this.#_SourceBus.Name, [ COM_GET_DATA_RAW ]);
     }
+
     get DeviceInfo() { return this.#_DeviceInfo; }
 
     get Alarms() { return this.#_Alarms; }
@@ -117,14 +142,21 @@ class ClassChannelSensor extends ClassBaseService_S {
 
     get Filter() { return this.#_Filter; }
 
-    static GetID(_sourceId, _deviceId, _chNum) { return `${_sourceId}-${_deviceId}-${('0' + _chNum).slice(-2)}`; }
+    static GetID(_sourceName, _deviceId, _chNum) { 
+        return `${_sourceName}-${_deviceId}-${('0' + _chNum).slice(-2)}`; 
+    }
     /**
      * @getter
      * Возвращает уникальный идентификатор канала
      */
-    get ID() { return ClassChannelSensor.GetID(this.#_SourceId, this.#_DeviceId, this.#_ChNum); }
+    get ID() { return ClassChannelSensor.GetID(this.#_SourceName, this.#_DeviceId, this.#_ChNum); }
 
-    get SourceID() { return this.#_SourceId; }
+    get SourceName() { return this.#_SourceName; }
+
+    get Name() { 
+        const ch_names = this.#_DeviceInfo?.ChannelNames;
+        return Array.isArray(ch_names) ? ch_names[this.#_ChNum] : undefined;
+    }
 
     /**
      * @getter
@@ -173,12 +205,12 @@ class ClassChannelSensor extends ClassBaseService_S {
         val = this.#_Transform.TransformValue(val);
         this.#_ValueBuffer.push(val);
 
-        // this.#_SysBus.emit(`${this.ID}-fine`, this.Value);
+        this.EmitEvents_all_get_data_fine();
 
         this._DataUpdated = true;
         this._DataWasRead = false;
 
-        if (this._Alarms) this._Alarms.CheckZone(this.Value);
+        if (this.#_Alarms) this.#_Alarms.CheckZone(this.Value);
     }
 
     /**
@@ -215,9 +247,9 @@ class ClassChannelSensor extends ClassBaseService_S {
     */
     /**
      * @typedef ChConfigOpts
-     * @property {object} transform
-     * @property {object} suppression
-     * @property {object} zones
+     * @property {TransformOpts} transform
+     * @property {SuppressionOpts} suppression
+     * @property {ZoneOpts} zones
      * @property {number} avgCapacity
      */
     /**
@@ -230,37 +262,62 @@ class ClassChannelSensor extends ClassBaseService_S {
         this.#_Transform = new ClassTransform(_config.transform);
         this.#_Suppression = new ClassSuppression(_config.suppression);
         this.#_Filter = new ClassFilter();
-        this._Alarms = null;
+        this.#_Alarms = null;
         if (_config.zones) {
             this.EnableAlarms();
             this.#_Alarms.SetZones(_config.zones);
         }
         this.AvgCapacity = _config.avgCapacity ?? 1;
     }
-    
-    #SetupService({ _busList, _busNameList}) {
-        // получение имени шины, которая связывает канал с источником
-        const source_bus_name = _busNameList.find(_busName =>
-            _busName !== 'sysBus' && _busName !== 'logBus' && _busName !== 'dataBus');
-        this.#_SourceBus = _busList[source_bus_name];
-        // топик по которому будут поступать сырые данные
-        const topic_get_data_raw = `${this.ID}-get-data-raw`;
-        const handler_name = `HandlerEvents_${topic_get_data_raw.split('-').join('_')}`;
-        // инициализация метода-обработчика на прием данных
-        this[handler_name] = ((_topic, _msg) => {
+    /**
+     * @method
+     * @public
+     * @description Отправляет на dataBus сообщение со значением канала
+     */
+    EmitEvents_all_get_data_fine() {
+        const msg = {
+            dest: 'all',
+            com: 'all-get-data-fine',
+            arg: [this.ID],
+            value: [this.Value]
+        }
+        this.EmitMsg('dataBus', msg.com, msg);
+    }
+    /**
+     * @method
+     * @public
+     * @description 
+     * @param {string} _topic 
+     * @param {*} _msg 
+     */
+    HandlerEvents_all_get_data_raw(_topic, _msg) {
+        const [ source_name ] = _msg.arg;
+        const [ ch_short_id ] = _msg.value.arg; 
+        if (`${source_name}-${ch_short_id}` === this.ID)
             this.Value = _msg.value[0]?.value[0];
-        }).bind(this);
-        // подписка на топик
-        this.FillEventOnList(this.#_SourceBus.Name, [topic_get_data_raw]);
+    }
+    /**
+     * @method
+     * @public
+     * @description Отправляет на шину сообщение с текущим состоянием зон канала
+     */
+    EmitEvents_all_ch_alarm() {
+        const msg = {
+            dest: 'all',
+            com: COM_CH_ALARM,
+            arg: [this.ID],
+            value: [this.#_Alarms.ZonesState]
+        }
+        this.EmitMsg('dataBus', msg.com, msg);
     }
     /**
      * @method
      * Инициализирует ClassAlarms в полях объекта.  
      */
     EnableAlarms() {
-        this._Alarms = new ClassAlarms(this);
+        this.#_Alarms = new ClassAlarms(this);
+        this.#_Alarms.SetChannelCb(this.EmitEvents_all_ch_alarm.bind(this));
     }
-
     /**
      * @method 
      * Очищает буфер. Фактически сбрасывает текущее значение канала. 
@@ -514,6 +571,24 @@ class ClassAlarms {
         this.SetDefault();
     }
     /**
+     * @getter 
+     * Возвращает объект, в котором ключ - имя зоны, а значение 0 или 1.  
+     */
+    get ZonesState() {
+        const list = { redLow: 0, yelLow: 0, green: 0, yelHigh: 0, redHigh: 0 };
+        list[this._CurrZone] = 1;
+        return list;
+    }
+    /**
+     * @method
+     * @public
+     * @description Устанавливает коллбэк, который вызывается для уведомления канала о смене текущей зоны
+     * @param {Function} _cb 
+     */
+    SetChannelCb(_cb) {
+        this._ChannelCb = _cb;
+    }
+    /**
      * @method
      * Устанавливает значения полей класса по-умолчанию
      */
@@ -550,17 +625,10 @@ class ClassAlarms {
         if (_opts.yellow) {
             this._Zones[indexes.yelLow] = _opts.yellow.low;
             this._Zones[indexes.yelHigh] = _opts.yellow.high;
-            this.SetCallback(indexes.yelLow, _opts.yellow.cbLow);
-            this.SetCallback(indexes.yelHigh, _opts.yellow.cbHigh);
         }
         if (_opts.red) {
             this._Zones[indexes.redLow] = _opts.red.low;
             this._Zones[indexes.redHigh] = _opts.red.high;
-            this.SetCallback(indexes.redLow, _opts.red.cbLow);
-            this.SetCallback(indexes.redHigh, _opts.red.cbHigh);
-        }
-        if (_opts.green) {
-            this.SetCallback(indexes.green, _opts.green.cb);
         }
     }
     /**
@@ -574,10 +642,8 @@ class ClassAlarms {
         let red = opts.red;
 
         if (yellow) {
-            if (yellow.low >= yellow.high ||                            //если нижняя граница выше верхней
-                yellow.cbLow && typeof yellow.cbLow !== 'function' ||   //коллбэк передан но не является функцией
-                yellow.cbHigh && typeof yellow.cbHigh !== 'function') return false;
-
+            if (yellow.low >= yellow.high)                            //если нижняя граница выше верхней
+                return false;
             if (opts.red) {                         //если переданы настройки красной зоны, сравниваем с ними
                 if (yellow.low < red.low || yellow.high > red.high)
                     return false;
@@ -586,9 +652,8 @@ class ClassAlarms {
                 return false;
         }
         if (red) {
-            if (red.low >= red.high ||                                  //если нижняя граница выше верхней
-                red.cbLow && typeof red.cbLow !== 'function' ||         //коллбэк передан но не является функцией
-                red.cbHigh && typeof red.cbHigh !== 'function') return false;
+            if (red.low >= red.high)                //если нижняя граница выше верхней
+                return false;
 
             if (!yellow) {                          //если не переданы настройки желтой зоны, сравниваем с текущими
                 if (opts.red.low > this._Zones[indexes.yelLow] || opts.red.high < this._Zones[indexes.yelHigh])
@@ -604,13 +669,14 @@ class ClassAlarms {
      */
     CheckZone(val) {
         let prevZone = this._CurrZone;
-        this._CurrZone = val < this._Zones[indexes.redLow] ? 'redLow'
-            : val > this._Zones[indexes.redHigh] ? 'redHigh'
-                : val < this._Zones[indexes.yelLow] ? 'yelLow'
-                    : val > this._Zones[indexes.yelHigh] ? 'yelHigh'
+        this._CurrZone  = val < this._Zones[indexes.redLow]  ? 'redLow'
+                        : val > this._Zones[indexes.redHigh] ? 'redHigh'
+                        : val < this._Zones[indexes.yelLow]  ? 'yelLow'
+                        : val > this._Zones[indexes.yelHigh] ? 'yelHigh'
                         : 'green';
 
         if (prevZone !== this._CurrZone) {
+            this._ChannelCb?.();
             this._Callbacks[indexes[this._CurrZone]](this._Channel, prevZone);
         }
     }
