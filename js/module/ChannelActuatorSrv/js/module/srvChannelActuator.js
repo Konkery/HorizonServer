@@ -8,7 +8,7 @@
  */
 
 const { register } = require('module');
-const ClassBaseService_S = require('./srvService');
+const ClassBaseService_S = require('srvService');
 /**
  * @class 
  * Самый "старший" предок в иерархии классов датчиков. 
@@ -69,24 +69,38 @@ class ClassChannelActuator extends ClassBaseService_S {
     #_Filter = null;
     #_Alarms = null;
     /**
-     * @constructor
-     * @param {ClassActuatorInfo} _sensorInfo - ссылка на основной объект датчика
-     * @param {Number} num - номер канала
-     */
-    constructor({ _busList, _busNameList, _id, _deviceInfo, _config }) {
-        super({ _name: _id, _busNameList, _busList });
-        const [sourceId, deviceId, chNum] = _id.split('-');
+    * @typedef TypeServiceOpts
+    * @property {[ClassBus_S]} _busList
+    * @property {[string]} _busNameList
+    */
+   /**
+    * @typedef TypeChOpts
+    * @property {string} sourceName, 
+    * @property {string} deviceId 
+    * @property {number} chNum
+    */
+   /**
+    * @constructor 
+    * @param {TypeServiceOpts} _serviceOpts 
+    * @param {TypeChOpts} _chOpts 
+    * @param {ClassActuatorInfo} _deviceInfo 
+    */
+   constructor({ _busList, _busNameList }, _chOpts, _deviceInfo) {
+        const { SourceName: sourceName, DeviceId: deviceId, ChNum: chNum } = _chOpts;
+        // имя службы идентично id канала
+        const service_name = ClassChannelSensor.GetID(sourceName, deviceId, chNum);
+        super({ _name: service_name, _busNameList, _busList });
 
         this.#_DeviceInfo = _deviceInfo;      //ссылка на объект физического датчика
         /** Основные поля */
         // TODO: обновление status по событиям
         this.#_Status = 0;
-        this.#_SourceId = sourceId;
+        this.#_SourceId = sourceName;
         this.#_DeviceId = deviceId;
         this.#_ChNum    = +chNum;             //номер канала (начиная с 0)
 
         /****** */
-        this.SetupConfig(_config);
+        this.SetupConfig(_chOpts.Config);
         // получение имени шины, которая связывает канал с источником
         this.#_SourceBus = Object.values(_busList).find(_bus => 
             _bus.Name !=='sysBus' && _bus.Name !== 'logBus' && _bus.Name !== 'dataBus');
