@@ -1,5 +1,5 @@
 const COM_GET_DATA_RAW = 'all-get-data-raw';
-const COM_CH_ALARM = 'all-ch-alarm;
+const COM_CH_ALARM = 'all-ch-alarm';
 /**
  * @typedef SensorOptsType 
  * @property {String} name
