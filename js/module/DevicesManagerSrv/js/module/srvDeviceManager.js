@@ -242,8 +242,8 @@ class ClassDeviceManager_S extends ClassBaseService_S {
      */
     #CreateChannelsFromDevlist(_infoStrings, _sourceName, _type) {
         _infoStrings.forEach(infoString => {
-            const [article, deviceId, chNum] = infoString.split('-');
-            this.#CreateChannel({ article, deviceId, sourceId: _sourceName, chNum }, _type);
+            const [Article, DeviceId, ChNum] = infoString.split('-');
+            this.#CreateChannel({ Article, DeviceId, SourceName: _sourceName, ChNum }, _type);
         });
     }
     /**
