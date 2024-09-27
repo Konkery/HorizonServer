@@ -99,7 +99,6 @@ class ClassDeviceManager_S extends ClassBaseService_S {
      */
     async HandlerEvents_dm_deviceslist_get(_topic, _msg) {
         this.#_ResReceived++;
-        console.log(`dm | get deviceslist ${new Date().getTime()}`);
         const msg_lhp = _msg.value[0];
         // извлечение списка каналов
         const { sensor, actuator } = msg_lhp.value[0];
@@ -125,7 +124,7 @@ class ClassDeviceManager_S extends ClassBaseService_S {
     async HandlerEvents_all_connections_done(_topic, _msg) {
         // получение Type источника
         const source_name = _msg.arg[0];
-        const source_type = this.#_SourcesState._Collection.find(_source => _source.Name === source_name)?.Type;
+        const source_type = this.#_SourcesState._Collection.find(_source => _source.Name === source_name)?.Protocol;
         // обход источников для рассылки запроса на получение списка каналов
         this.#_SourcesState._Collection
             .filter(_source => _source.IsConnected && !_source.CheckDM)
@@ -136,13 +135,36 @@ class ClassDeviceManager_S extends ClassBaseService_S {
                 /* логгирование */
                 const log_msg = `DM | req sent to ${_source.Name} total: ${this.#_ReqSent}`;
                 this.EmitEvents_logger_log({ level: 'INFO', msg: log_msg });
-                console.log(`DM | req sent to ${_source.Name} total: ${this.#_ReqSent}`);
                 /************** */
             });
 
         // завершение ожидания по таймауту
         this.#_GetInfoTimeout = setTimeout(this.#ReadyCb.bind(this), GET_INFO_TIMEOUT);
     };
+    EmitEvents_providermdb_get_channels() {
+        const msg = {
+            dest: 'providermdb',
+            demandRes: true,
+            resCom: 'dm-set-channels',
+            com: 'providermdb-get-channels',
+            arg: [],
+            value: []
+        }
+        return this.EmitMsg('mdbBus', msg.com, msg, { timeout: 1000 });
+    }
+    /**
+     * @method
+     * @public
+     * @description Обрабатывает получение списка каналов и устройств. 
+     * @param {string} _topic 
+     * @param {} _msg 
+     */
+    HandlerEvents_dm_set_channels(_topic, _msg) {
+        const [ ch_list, device_info_list ] = _msg.value;
+
+        this.CreateDeviceInfoFromConfig(device_info_list);
+        this.CreateChannelsFromConfig(ch_list);
+    }
     /**
      * @method
      * @private
@@ -151,7 +173,7 @@ class ClassDeviceManager_S extends ClassBaseService_S {
      * @param {*} _source 
      */
     async #SendDeviceListGet(_source) {
-        if (_source.Type === 'lhp') {
+        if (_source.Protocol === 'lhp') {
             // отправка запроса с ожиданием ответа
             const res  = await this.EmitEvents_proxywsc_send({ 
                 value: [MSG_DM_DEVLIST_GET], arg: [_source.Name], 
@@ -165,21 +187,19 @@ class ClassDeviceManager_S extends ClassBaseService_S {
                 this.EmitEvents_logger_log({ level: 'WARN', msg: `Timeout awaiting for 'dm-deviceslist-get' from ${_source}`});
             }
         }
-        if (_source.Type === 'mqtt') {
+        if (_source.Protocol === 'mqtt') {
             this.EmitEvents_proxymqttc_deviceslist_get();
         }
-        if (_source.Type === 'rpi') {
+        if (_source.Protocol === 'rpi') {
             this.EmitEvents_proxyrpi_deviceslist_get();
         }
     }
-
     /** 
      * @method
      * @private
      * @description Завершает ожидание 'devicelist-get' и оповещает о имеющихся результатах 
      */
     #ReadyCb() {
-        console.log(`DM | req: ${this.#_ReqSent} res: ${this.#_ResReceived}`);
         this.EmitEvents_logger_log({ level: 'INFO', 
             msg: `DM | req: ${this.#_ReqSent} res: ${this.#_ResReceived}`
         });
@@ -193,7 +213,6 @@ class ClassDeviceManager_S extends ClassBaseService_S {
         clearTimeout(this.#_GetInfoTimeout);
         this.#_GetInfoTimeout = null;
     }
-
     /**
      * @method
      * @private
@@ -205,7 +224,6 @@ class ClassDeviceManager_S extends ClassBaseService_S {
             this.#_Channels.push(ch);
         }
     }
-
     /**
      * @method
      * @public
@@ -216,24 +234,6 @@ class ClassDeviceManager_S extends ClassBaseService_S {
     GetChannel(id) {
         return this.#_Channels.find(ch => ch.ID === id);
     }
-    /**
-     * @method
-     * @description Создает объект ClassSensorInfo
-     * @param {string} _article 
-     * @returns {ClassSensorInfo}
-     */
-    #CreateDeviceInfo(_article) {
-        // this.EmitEvents_providermdb_get_info();
-        // TODO
-        // Обращение в БД 
-        return new ClassSensorInfo({ 
-            name: 'unknown', 
-            article: _article,
-            moduleName: 'unknown',
-            type: 'sensor',
-            channelNames: [] });
-    }
-
     /**
      * @method
      * @description Создает каналы по спискам, полученным командой dm-devicelsit-get от источника
@@ -256,22 +256,24 @@ class ClassDeviceManager_S extends ClassBaseService_S {
      */
     /**
      * @typedef TypeChOpts
-     * @property {string} article
-     * @property {string} deviceId
-     * @property {string} sourceId
-     * @property {number} chNum
+     * @property {string} Article
+     * @property {string} DeviceId
+     * @property {string} SourceName
+     * @property {number} ChNum
      * @property {TypeDeviceOpts} deviceInfo
      */
     /**
      * @method
      * @private
      * @description Создает и сохраняет объект канала датчика 
-     * @param {TypeChOpts} param0 
+     * @param {TypeChOpts} _chOpts - аргументы для инициализации канала
+     * @param {string} _type - тип девайса  
      */
     #CreateChannel(_chOpts, _type) {
-        const source_type = this.#_SourcesState._Collection.find(source => source.Name === _chOpts.sourceId).Type;
+        const source_type = this.#_SourcesState._Collection.find(source => source.Name === _chOpts.SourceName).Protocol;
         const bus_name_list = ['sysBus', 'logBus', 'dataBus', `${source_type}Bus`];
-        const ClassChannel = _type === 'sensor' ? ClassChannelSensor : ClassChannelActuator;
+        const ClassChannel = _type === 'sensor' ? ClassChannelSensor 
+                                                : ClassChannelActuator;
         try {
             // создание канала
             const ch = new ClassChannel({ _busNameList: bus_name_list, _busList: this.#_GBusList }, _chOpts);
@@ -281,21 +283,18 @@ class ClassDeviceManager_S extends ClassBaseService_S {
             this.#AddChannel(ch);
             // логирование 
             this.EmitEvents_logger_log({ level: 'INFO', msg: `Created ch ${ch.ID} successfully!`});
-            console.log(`DM | Create ch ${ch.ID}`);
         } catch (e) {
             this.EmitEvents_logger_log({ level: 'ERROR', msg: `Failed to create ch`});
-        }
-        
+        }    
     }
     /**
      * @method
      * @public
      * @description Возвращает объект ChannelInfo/ActuatorInfo
-     * @param {*} _article 
+     * @param {string} _article 
      * @returns 
      */
     GetDeviceInfo(_article) {
-        this.#_DeviceInfoList[_article] ??= this.#CreateDeviceInfo(_article);
         return this.#_DeviceInfoList[_article];
     }
     /**
@@ -306,8 +305,22 @@ class ClassDeviceManager_S extends ClassBaseService_S {
      */
     CreateChannelsFromConfig(_channelOptsList) {
         _channelOptsList.forEach(_chOpts => {
-            const { type } = _chOpts.deviceInfo; 
+            const type = _chOpts.Type; 
             this.#CreateChannel(_chOpts, type);
+        });
+    }
+    /**
+     * @method
+     * @public
+     * @description Заполняет список DeviceInfo согласно данным, полученным от providerMdb
+     * @param {[]} _deviceInfoList 
+     */
+    CreateDeviceInfoFromConfig(_deviceInfoList) {
+        _deviceInfoList.forEach(_devInfoOpts => {
+            const article = _devInfoOpts.Article;
+            const type = _devInfoOpts.Type;
+            this.#_DeviceInfoList[article] = type === 'sensor' ? new ClassSensorInfo(_devInfoOpts)
+                                                               : new ClassActuatorInfo(_devInfoOpts);
         });
     }
     /**
@@ -371,7 +384,6 @@ class ClassDeviceManager_S extends ClassBaseService_S {
     async EmitEvents_proxyrpi_deviceslist_get() {
         return this.EmitMsg('hubBus', 'proxyrpi-deviceslist-get', MSG_PHUB_DEVLIST_GET);
     }
-
     /**
      * @method
      * @description Отправляет запрос на получение списка каналов
