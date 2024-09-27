@@ -1,12 +1,11 @@
 /** зависимости */
 const { ClassBusMsg_S, constants: MSG_CONST } = require('srvBusMsg');
-
+const ClassBus_S = require('srvBus');
 // const ClassBus_S       = require('srvBus');
 const { EventEmitter } = require('events');
 /********************************* */
 
 /** константы */
-const EVENT_INIT = 'init1';
 const STATUS_INACTIVE = 'inactive';
 const STATUS_ACTIVE = 'active';
 
@@ -25,15 +24,7 @@ const EVENT_ON_LIST_NR = ['all-run'];
 const EVENT_ON_LIST_SYSBUS = ['all-init0', 'all-init1', 'all-close', 'all-new-source'];
 /********************************* */
 
-/** вспомогательные функции */
-const capitalizeFunc = (str) => str.charAt(0).toUpperCase() + str.slice(1);
-const getBusHandlerName = (_busName) => `HandlerEvents${capitalizeFunc(_busName)}`;
-const getEventOnListName = (_busName) => `EVENT_ON_LIST_${_busName.toUpperCase()}`;
-const getEventEmitListName = (_serviceName) => `EVENT_EMIT_${_serviceName.toUpperCase()}_LIST`;
-const getResponseTopic = (_topic, _receiverName) => {       // proc-get-data -> this.Name-get-data
-    const [ destName, ...com ] = _topic.split('-');
-    return `${_receiverName}-${com.join('-')}`;
-};      
+/** вспомогательные функции */ 
 const getEventHandlerName = (_topic) => `HandlerEvents_${_topic.replace(/-/g, '_')}`;
 const getEventEmitName = (_topic) => `EmitEvents_${_topic.replace(/-/g, '_')}`;
 /********************************* */
@@ -70,7 +61,7 @@ class ClassBaseService_S {
     /**
      * @typedef {Object} ServiceOpts
      * @property {string} name - имя службы
-     * @property {[string]} busNamesList - список имен используемых шин
+     * @property {[string]} busNameList - список имен используемых шин
      * @property {object} busList - глобальная коллекция инициализированных шин
      * @property {object} node - объект узла, через который происходит рассылка сообщений
      */
@@ -110,13 +101,19 @@ class ClassBaseService_S {
     get Name() {
         return this.#_Name;
     }
-
     /**
      * @getter
      * @description Статус службы
      */
     get Status() {
         return this.#_Status;
+    }
+    /**
+     * @getter
+     * @description геттер на список доступных шин.
+     */
+    get BusList() {
+        return this.#_BusList;
     }
 
     /**
@@ -137,7 +134,8 @@ class ClassBaseService_S {
         this.#AddHandlerEvents(_busName);
         // наполнение _HandleFunc ссылками на методы-обработчики переданных событий
         this.#PackHandlerFunc(_busName);
-        console.log(`${this.Name} | ${_busName} | EventOnList topics: ${this.#_EventOnList[_busName].filter(e => e.on).map(e => e.name).join(', ')}`);
+        const log_msg = `${this.Name} | ${_busName} | EventOnList topics: ${this.#_EventOnList[_busName].filter(e => e.on).map(e => e.name).join(', ')}`;
+        this.EmitEvents_logger_log ({ level: 'I', msg: log_msg });
     }
     /**
      * @method
@@ -159,6 +157,30 @@ class ClassBaseService_S {
     }
     /**
      * @method
+     * @public
+     * @description Дополняет список имен шин, к которым подключается служба; 
+     * Вызывает this.UpdateBusList() для попытки подтянуть новые шины в коллекцию класса 
+     * @param {[string]} _busNameList - список имен шин
+     */
+    AddBusList(_busNameList) {
+        _busNameList
+        ?.filter(_busName => !this.#_BusNameList.includes(_busName))
+        .forEach(_busName => {
+            this.#_BusNameList.push(_busName);
+        });
+        this.UpdateBusList();
+    }
+    /**
+     * @method
+     * @public
+     * @param {ClassBusMsg_S} _bus 
+     */
+    CreateBus(_bus) {
+        if (this.Name === 'proc' && _bus instanceof ClassBus_S)
+            this.#_GlobalBusList[_bus.Name] = _bus;
+    }
+    /**
+     * @method
      * @private
      * @description Создает глобальный обработчик событий на шину по её имени.
      * @param {string} _busName 
@@ -172,10 +194,13 @@ class ClassBaseService_S {
                     const { hash } = _msg.metadata;
                     // ищем в контейнере по хэшу
                     const resolve = this.#_PromiseList[hash];
-                    resolve?.(true);
+                    if (resolve)
+                        resolve(true);
+                    else            // таймер ожидания истёк
+                        return;     // обработчик не будет вызван
                 }
             } catch (e) {
-                console.log(`Error while processing msg ${_topic}`);
+                this.EmitEvents_logger_log({ level: 'E', msg: `Error while processing msg ${_topic}` });
                 return;
             }
             const handlerFunc = this.#_HandlerFunc[_topic];
@@ -285,6 +310,13 @@ class ClassBaseService_S {
     HandlerEvents_all_new_source(_topic, _data) {
         this.UpdateBusList();
     }
+    /**
+     * @method
+     * @public
+     * @description Отправляет сообщение по Node-RED связи.
+     * @param {string} _topic 
+     * @param {*} _data 
+     */
     EmitEvents_all_get_msg_nr(_topic, _data) {
         this.#_Node.send({ topic: _topic, payload: _data });
     }
@@ -339,8 +371,7 @@ class ClassBaseService_S {
             _msgOpts.source = this.Name;
             return new ClassBusMsg_S(_msgOpts);
         } catch (e) {
-            this.EmitEvents_logger_log({ level: 'WARN', msg: `BusMsg | ${e}` });
-            console.log(`Error while creating msg ${_msgOpts}`);
+            this.EmitEvents_logger_log({ level: 'E', msg: `BusMsg | ${e}` });
             return null;
         }
     }
@@ -356,14 +387,14 @@ class ClassBaseService_S {
      * @description Предназначен для отправки сообщений на логгер. В arg указывается уровень сообщения, а в value - сообщение 
      * @param {TypeLogOpts} param0 
      */
-    EmitEvents_logger_log({ level, msg }) {
+    EmitEvents_logger_log({ level, msg, obj }) {
         const argsValid = typeof level === 'string' && typeof msg === 'string';
         if (argsValid) {
             const bus_msg = {
                 dest: 'logger',
                 com: 'logger-log',
                 arg: [level],
-                value: [msg]
+                value: [msg, obj]
             }
             this.EmitMsg('logBus', 'logger-log', bus_msg);
         }
@@ -386,12 +417,12 @@ class ClassBaseService_S {
         const bus = this.#_BusList[_busName];
 
         if (!bus) {
-            console.log(`No bus with name ${_busName}`);
+            this.EmitEvents_logger_log({ level: 'E', msg: `No bus with name ${_busName}` });
             return false;
         }
         const msg = this.CreateMsg(_msg);
         if (!msg) {
-            console.log(`warn | unexpected msg format`);
+            this.EmitEvents_logger_log({ level: 'E', msg: `warn | unexpected msg format` });
             return;
         }
         // если запрос требует ответ, то создается промис, который выполнится либо по таймауту либо при получении ответа
