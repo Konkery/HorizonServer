@@ -1,12 +1,18 @@
-const COM_GET_DATA_RAW = 'all-get-data-raw';
+const COM_DATA_RAW_GET = 'all-data-raw_get';
 const COM_CH_ALARM = 'all-ch-alarm';
+const COM_ALL_INIT_CH = 'all-init-channels-set';
+
+const STATUS_ACTIVE = 'active';
+const STATUS_INACTIVE = 'inactive';
 /**
  * @typedef SensorOptsType 
  * @property {String} name
  * @property {String} article
- * @property {String} moduleName
+ * @property {String} module
+ * @property {string} description
  * @property {String} type
  * @property {[String]} channelNames
+ * @property {[String]} channelNameschannelMeasures
  */
 
 const ClassBaseService_S = require('srvService');
@@ -21,14 +27,16 @@ class ClassSensorInfo {
      * @param {SensorOptsType} _opts - объект с описательными характеристиками датчика и параметрами, необходимых для обеспечения работы датчика
      */
     constructor(_opts={ name: 'unknown', article: 'unknown', 
-        moduleName: 'unknown', type: 'unknown', channelNames:[] }) {
-        this._Name = _opts.name;
-        this._Article = _opts.article;
-        this._ModuleName = _opts.moduleName;
-        this._Type = _opts.type;
-        this._ChannelNames = _opts.channelNames;
-
-        this.CheckProps();
+        module: 'unknown', channelNames:[] }) {
+        this._Name        = _opts.name;
+        this._Module      = _opts.module;
+        this._Description = _opts.description;
+        this._Type        = 'sensor';
+        this._Article     = _opts.article;
+        this._QuantityChannel = _opts.quantityChannel;
+        this._ChannelNames    = _opts.channelNames;
+        this._ChannelMeasures = _opts.channelMeasures;
+        // this.CheckProps();
     }
 
     get Name() { return this._Name; }
@@ -58,8 +66,6 @@ class ClassSensorInfo {
  * @description Класс, представляющий каждый отдельно взятый канал датчика в качестве службы фреймворка.
  */
 class ClassChannelSensor extends ClassBaseService_S {
-    #_SourceBus;
-
     #_ValueBuffer = {
         _depth: 1,
         _rawVal: undefined,
@@ -85,6 +91,9 @@ class ClassChannelSensor extends ClassBaseService_S {
     #_Suppression = null;
     #_Filter = null;
     #_Alarms = null;
+
+    #_Source;
+    #_InitCompleted = false;
 
     /**
      * @typedef TypeServiceOpts
@@ -124,12 +133,8 @@ class ClassChannelSensor extends ClassBaseService_S {
         this._TimeStamp;
         // настройка функций мат.обработки
         this.SetupConfig(_chOpts.Config);
-        // получение имени шины, которая связывает канал с источником
-        const source_bus_name = _busNameList.find(_busName =>
-            _busName !== 'sysBus' && _busName !== 'logBus' && _busName !== 'dataBus');
-        this.#_SourceBus = _busList[source_bus_name];
-        // подписка на топик
-        this.FillEventOnList(this.#_SourceBus.Name, [ COM_GET_DATA_RAW ]);
+        // подписка на init
+        this.FillEventOnList('sysBus', [ COM_ALL_INIT_CH ]);
     }
 
     get DeviceInfo() { return this.#_DeviceInfo; }
@@ -145,6 +150,7 @@ class ClassChannelSensor extends ClassBaseService_S {
     static GetID(_sourceName, _deviceId, _chNum) { 
         return `${_sourceName}-${_deviceId}-${('0' + _chNum).slice(-2)}`; 
     }
+    
     /**
      * @getter
      * Возвращает уникальный идентификатор канала
@@ -153,9 +159,14 @@ class ClassChannelSensor extends ClassBaseService_S {
 
     get SourceName() { return this.#_SourceName; }
 
-    get Name() { 
+    /**
+     * @getter
+     * @public
+     * @description Возвращает имя канала
+     */
+    get ChName() { 
         const ch_names = this.#_DeviceInfo?.ChannelNames;
-        return Array.isArray(ch_names) ? ch_names[this.#_ChNum] : undefined;
+        return Array.isArray(ch_names) ? ch_names[this.#_ChNum] : 'unknown';
     }
 
     /**
@@ -164,11 +175,11 @@ class ClassChannelSensor extends ClassBaseService_S {
      */
     get Status() {
         // return this._Sensor._ChStatus[this.#_ChNum];
-        return this.#_Status;
+        return this.#_Source?.IsConnected && this.#_InitCompleted ? STATUS_ACTIVE : STATUS_INACTIVE;
     }
 
     set Status(_s) {
-        if (typeof _s == 'number') this.#_Status = _s;
+        // if (typeof _s == 'number') this.#_Status = _s;
     }
 
     /**
@@ -205,7 +216,7 @@ class ClassChannelSensor extends ClassBaseService_S {
         val = this.#_Transform.TransformValue(val);
         this.#_ValueBuffer.push(val);
 
-        this.EmitEvents_all_get_data_fine();
+        this.EmitEvents_all_data_fine_set();
 
         this._DataUpdated = true;
         this._DataWasRead = false;
@@ -269,12 +280,13 @@ class ClassChannelSensor extends ClassBaseService_S {
         }
         this.AvgCapacity = _config.avgCapacity ?? 1;
     }
+
     /**
      * @method
      * @public
      * @description Отправляет на dataBus сообщение со значением канала
      */
-    EmitEvents_all_get_data_fine() {
+    EmitEvents_all_data_fine_set() {
         const msg = {
             dest: 'all',
             com: 'all-get-data-fine',
@@ -283,19 +295,41 @@ class ClassChannelSensor extends ClassBaseService_S {
         }
         this.EmitMsg('dataBus', msg.com, msg);
     }
+
+    /**
+     * @method
+     * @public
+     * @description Обработчик команды на инициализацию службы
+     * @param {string} _topic 
+     * @param {ClassBusMsg_S} _msg 
+     */
+    HandlerEvents_all_init_channels_set(_topic, _msg) {
+        if (this.#_InitCompleted) return
+        
+        super.HandlerEvents_all_init_stage1_set(_topic, _msg);
+
+        this.#_Source = this.SourcesState._Collection
+            .find(_source => _source.Name === this.#_SourceName);
+        
+        const bus_name = this.#_Source.PrimaryBus;
+        this.FillEventOnList(bus_name, [ COM_DATA_RAW_GET ]);
+        this.#_InitCompleted = true;
+    }
+
     /**
      * @method
      * @public
      * @description 
      * @param {string} _topic 
-     * @param {*} _msg 
+     * @param {ClassBusMsg_S} _msg 
      */
-    HandlerEvents_all_get_data_raw(_topic, _msg) {
+    HandlerEvents_all_data_raw_get(_topic, _msg) {
         const [ source_name ] = _msg.arg;
         const [ ch_short_id ] = _msg.value.arg; 
         if (`${source_name}-${ch_short_id}` === this.ID)
             this.Value = _msg.value[0]?.value[0];
     }
+
     /**
      * @method
      * @public
@@ -310,6 +344,7 @@ class ClassChannelSensor extends ClassBaseService_S {
         }
         this.EmitMsg('dataBus', msg.com, msg);
     }
+
     /**
      * @method
      * Инициализирует ClassAlarms в полях объекта.  
@@ -318,6 +353,7 @@ class ClassChannelSensor extends ClassBaseService_S {
         this.#_Alarms = new ClassAlarms(this);
         this.#_Alarms.SetChannelCb(this.EmitEvents_all_ch_alarm.bind(this));
     }
+
     /**
      * @method 
      * Очищает буфер. Фактически сбрасывает текущее значение канала. 
