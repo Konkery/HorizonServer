@@ -1,19 +1,21 @@
-const { hash } = require('crypto');
 const ClassBaseService_S = require('srvService');
 
-const KEEP_ALIVE_HASH = 5000;
+const KEEP_ALIVE_HASH = 3000;
 
-const COM_PWSC_SEND    = 'proxywsc-send';
-const COM_PWSC_GET_MSG = 'proxywsc-get-msg';
-const COM_WSC_SEND = 'wsc-send';
+const COM_PWSC_SEND    = 'proxywsclient-send';
+const COM_PWSC_MSG_GET = 'proxywsclient-msg-get';
+const COM_WSC_SEND     = 'wsclient-send';
 
-const EVENT_ON_LIST_LHPBUS = [COM_PWSC_SEND, COM_PWSC_GET_MSG];
+const EVENT_ON_LIST_SYSBUS = ['all-init-stage1-set', 'all-close'];
+const EVENT_ON_LIST_LHPBUS = [COM_PWSC_SEND, COM_PWSC_MSG_GET];
 const EVENT_EMIT_LIST_WSC = [COM_WSC_SEND];
 
-const BUS_NAME_LIST = ['sysBus', 'logBus', 'lhpBus'];
+const LHP_BUS = 'lhpBus';
+const BUS_NAME_LIST = ['sysBus', 'logBus', LHP_BUS];
 
 /**
- * @class является придатком WS Client и реализует 
+ * @class 
+ * @description Реализует службу прокси к WS Client и реализует: 
  * - передачу сообщений, полученных от WSC, системным службам  
  * - обработку запросов и сообщений со сторону служб 
  */
@@ -26,8 +28,24 @@ class ClassProxyWSClient_S extends ClassBaseService_S {
      */
     constructor({ _busList, _node }) {
         // передача в супер-конструктор имени службы и списка требуемых шин
-        super({ _name: 'proxywsc', _busNameList: BUS_NAME_LIST, _busList, _node });
-        this.FillEventOnList('lhpBus', EVENT_ON_LIST_LHPBUS);
+        super({ _name: 'proxywsclient', _busNameList: BUS_NAME_LIST, _busList, _node });
+        this.FillEventOnList('sysBus', EVENT_ON_LIST_SYSBUS);
+        this.FillEventOnList(LHP_BUS, EVENT_ON_LIST_LHPBUS);
+    }
+    /**
+     * @method
+     * @public
+     * @description 
+     * @param {string} _topic 
+     * @param {*} _msg 
+     */
+    HandlerEvents_all_init_stage1_set(_topic, _msg) {
+        super.HandlerEvents_all_init_stage1_set(_topic, _msg);
+
+        this.SourcesState._Collection.forEach(_source => {
+            if (_source.Protocol === 'lhp') 
+                _source.PrimaryBus = LHP_BUS;                
+        });
     }
     /**
      * @method
@@ -36,7 +54,7 @@ class ClassProxyWSClient_S extends ClassBaseService_S {
      * @param {string} _topic 
      * @param {ClassBusMsg_S} _msg 
      */
-    async HandlerEvents_proxywsc_send(_topic, _msg) {
+    async HandlerEvents_proxywsclient_send(_topic, _msg) {
         const msg_to_plc = _msg.value[0];
         // если запрос требует ответ, то его хэш сохраняется
         if (_msg.metadata.demandRes)
@@ -51,10 +69,10 @@ class ClassProxyWSClient_S extends ClassBaseService_S {
     /**
      * @method 
      * @description Вызывается при обработке события 'proxywsc_msg_get', который инициируется WSC
-     * @param {string} _topic 
-     * @param {ClassBusMsg_S} _msg 
+     * @param {string} _topic - команда
+     * @param {ClassBusMsg_S} _msg - сообщение
      */
-    HandlerEvents_proxywsc_get_msg(_topic, _msg) {
+    HandlerEvents_proxywsclient_msg_get(_topic, _msg) {
         // извлечение "ядра" сообщения, составленного службой контроллера
         // LHP.Unpack
         const msg_from_plc = _msg.value[0];
@@ -67,7 +85,7 @@ class ClassProxyWSClient_S extends ClassBaseService_S {
             arg: _msg.arg,      // arg = [sourceName] | sourceName извлекается из arg
             value: [msg_from_plc]
         };      
-        this.EmitMsg('lhpBus', msg_from_plc.com, msg);
+        this.EmitMsg(LHP_BUS, msg_from_plc.com, msg);
     }
 
     /**
@@ -82,7 +100,7 @@ class ClassProxyWSClient_S extends ClassBaseService_S {
             arg,
             dest
         });
-        return this.EmitMsg('lhpBus', COM_WSC_SEND, msg);         
+        return this.EmitMsg(LHP_BUS, COM_WSC_SEND, msg);         
     }
     /**
      * @method
@@ -116,7 +134,8 @@ class ClassProxyWSClient_S extends ClassBaseService_S {
      * @method
      * @private
      * @description возвращает хэш сообщения-запроса, ответ на который пришел
-     * @param {ClassBusMsg_S} _msg - сообщение-ответ
+     * @param {string} _com - команда
+     * @param {string} _sourceName - имя plc источника
      * @returns 
      */
     #GetMsgHash(_com, _sourceName) {
