@@ -1,3 +1,9 @@
+const COM_CH_ALARM = 'all-ch-alarm';
+const COM_ALL_INIT_CH = 'all-init-channels-set';
+
+const STATUS_ACTIVE = 'active';
+const STATUS_INACTIVE = 'inactive';
+
 /**
  * @typedef SensorOptsType 
  * @property {String} name
@@ -7,7 +13,6 @@
  * @property {[String]} channelNames
  */
 
-const { register } = require('module');
 const ClassBaseService_S = require('srvService');
 /**
  * @class 
@@ -26,7 +31,7 @@ class ClassActuatorInfo {
         this._Type         = _opts.type;
         this._ChannelNames = _opts.channelNames;
 
-        this.CheckProps();
+        // this.CheckProps();
     }
     get Name() { return this._Name; }
     get Article() { return this._Article; }
@@ -53,10 +58,10 @@ class ClassActuatorInfo {
  * Класс, представляющий каждый отдельно взятый канал датчика.
  */
 class ClassChannelActuator extends ClassBaseService_S {
-    #_SourceBus;
+    #_Source;
     #_Value;
     #_Status;
-    #_SourceId;
+    #_SourceName;
     #_DeviceId;
     #_ChNum;           //номер канала (начиная с 0)
     #_ChangeThreshold;
@@ -68,6 +73,8 @@ class ClassChannelActuator extends ClassBaseService_S {
     #_Suppression = null;
     #_Filter = null;
     #_Alarms = null;
+
+    #_InitCompleted = false;
     /**
     * @typedef TypeServiceOpts
     * @property {[ClassBus_S]} _busList
@@ -95,15 +102,14 @@ class ClassChannelActuator extends ClassBaseService_S {
         /** Основные поля */
         // TODO: обновление status по событиям
         this.#_Status = 0;
-        this.#_SourceId = sourceName;
+        this.#_SourceName = sourceName;
         this.#_DeviceId = deviceId;
         this.#_ChNum    = +chNum;             //номер канала (начиная с 0)
 
         /****** */
         this.SetupConfig(_chOpts.Config);
         // получение имени шины, которая связывает канал с источником
-        this.#_SourceBus = Object.values(_busList).find(_bus => 
-            _bus.Name !=='sysBus' && _bus.Name !== 'logBus' && _bus.Name !== 'dataBus');
+        this.FillEventOnList('sysBus', [ COM_ALL_INIT_CH ]);
     }
     get Info()        { return this.#_DeviceInfo; }
 
@@ -120,9 +126,9 @@ class ClassChannelActuator extends ClassBaseService_S {
      * @getter
      * Возвращает уникальный идентификатор канала
      */
-    get ID() { return ClassChannelActuator.GetID(this.#_SourceId, this.#_DeviceId, this.#_ChNum); }
+    get ID() { return ClassChannelActuator.GetID(this.#_SourceName, this.#_DeviceId, this.#_ChNum); }
 
-    get SourceID() { return this.#_SourceId; }
+    get SourceName() { return this.#_SourceName; }
     
     /**
      * @getter
@@ -130,7 +136,7 @@ class ClassChannelActuator extends ClassBaseService_S {
      */
     get Status() {
         // return this._Sensor._ChStatus[this.#_ChNum];
-        return this.#_Status;
+        return this.#_Source?.IsConnected && this.#_InitCompleted ? STATUS_ACTIVE : STATUS_INACTIVE;
     }
     set Status(_s) {
         if (typeof _s == 'number') this.#_Status = _s;
@@ -141,6 +147,22 @@ class ClassChannelActuator extends ClassBaseService_S {
      */
     get ChangeThreshold () { 
         return this.#_ChangeThreshold; 
+    }
+    /**
+     * @method
+     * @public
+     * @description Обработчик команды на инициализацию службы
+     * @param {string} _topic 
+     * @param {ClassBusMsg_S} _msg 
+     */
+    HandlerEvents_all_init_channels_set(_topic, _msg) {
+        if (this.#_InitCompleted) return;
+
+        super.HandlerEvents_all_init_stage1_set(_topic, _msg);
+
+        this.#_Source = this.SourcesState._Collection
+            .find(_source => _source.Name === this.#_SourceName);
+        this.#_InitCompleted = true;
     }
     /**
      * @typedef TransformOpts
@@ -230,17 +252,18 @@ class ClassChannelActuator extends ClassBaseService_S {
             dest: 'dm'
         }
         // определение типа подключения
-        const source_type = this.#_SourcesState.find(_source => _source.Name === this.SourceID); 
+        const source_protocol = this.#_SourcesState
+            .find(_source => _source.Name === this.SourceName).Protocol; 
         // выбор команды proxywsc-send | proxymqtt-send | ...
-        const com_send = source_type == 'hlp' ? 'proxywsc-send' : `proxy${source_type}-send`;
+        const com_send = source_protocol == 'lhp' ? 'proxywsclient-send' : `proxy${source_protocol}client-send`;
         const msg = {
             dest: com_send.split('-')[0],
             com: com_send,
-            arg: [this.SourceID],
+            arg: [this.SourceName],
             value: [msg_to_plc]
         }
         
-        this.EmitMsg(this.#_SourceBus.Name, com_send, msg);
+        this.EmitMsg(this.#_Source.PrimaryBus, com_send, msg);
     }
     /**
      * @method
