@@ -2,3 +2,4 @@
 res/nikita/*
 .vscode/*
 *.code-workspace
+node_modules
