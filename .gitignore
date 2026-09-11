@@ -4,3 +4,5 @@ res/nikita/*
 *.code-workspace
 node_modules
 sandbox
+srvSpiralSection
+00__raw

@@ -1,3 +1,5 @@
+const ClassChannel_S = require('../../srvChannel/js/srvChannel');
+
 const COM_CH_ALARM = 'all-ch-alarm';
 // ### ПОДПИСКИ
 const COM_ALL_DEVINFO_SET = 'all-device-config-set';
@@ -6,7 +8,8 @@ const COM_ALL_INIT1 = 'all-init-stage1-set';
 const COM_ALL_CLOSE = 'all-close';
 const COM_DM_NEW_CH = 'dm-new-channel';
 const COM_ALL_ACT_SET = 'all-actuator-set';
-const COM_DATA_FINE_SET = 'all-data-fine-set';
+const COM_ALL_DATA_FINE_SET = 'all-data-fine-set';
+const COM_ALL_DATA_FINE_GET = 'all-data-fine-get';
 const COM_ALL_DATA_RAW_GET = 'all-data-raw-get';
 
 const STATUS_ACTIVE = 'active';
@@ -29,9 +32,7 @@ const VIRTUAL_SOURCE_NAME = 'virtual';
  * @property {[String]} channelNames
  * @property {[String]} channelMeasures
  */
-// DEBUG
-// const ClassChannel_S = require('../../srvChannel/js/srvChannel');
-const ClassChannel_S = require('./srvChannel');
+
 /**
  * @class 
  * Самый "старший" предок в иерархии классов актуаторов. 
@@ -71,7 +72,6 @@ class ClassActuatorInfo {
 class ClassChannelActuator extends ClassChannel_S {
     #_Value;
     #_ValueConfirm;
-    #_StateChName;
     /**
     * @typedef TypeServiceOpts
     * @property {[ClassBus_S]} _busList
@@ -88,7 +88,6 @@ class ClassChannelActuator extends ClassChannel_S {
         // const service_name = _advOpts.Name;
         super({ _busNameList, _busList, _advOpts });
         this.#_ValueConfirm = _advOpts.ValueConfirm ?? false;
-        this.#_StateChName = _advOpts.StateChName;
         /****** */
         this.SetupMathChannel(_advOpts);
         this.FillEventOnList('dataBus', [COM_ALL_ACT_SET]);
@@ -111,9 +110,10 @@ class ClassChannelActuator extends ClassChannel_S {
         this.FillEventOnList(busName,
             this.#_ValueConfirm ? [COM_DM_DEVLIST_SET, COM_ALL_DATA_RAW_GET] : [COM_DM_DEVLIST_SET]);
         
-        if (this.#_StateChName)
-            this.FillEventOnList('dataBus', ['all-data-fine-set']);
-        
+        this.FillEventOnList('dataBus', this.StateChName 
+            ? [COM_ALL_DATA_FINE_SET, COM_ALL_DATA_FINE_GET] 
+            : [COM_ALL_DATA_FINE_GET]);
+
         this.EmitEvents_dm_new_channel();
         this.EmitEvents_all_ch_new();
     }
@@ -189,10 +189,17 @@ class ClassChannelActuator extends ClassChannel_S {
      */
     HandlerEvents_all_data_fine_set(_topic, _msg) {
         const [chName] = _msg.arg;
-        if (chName == this.#_StateChName) {
+        if (chName == this.StateChName) {
             const [{ Value, ValueSuppressed }] = _msg.value;
             if (!ValueSuppressed)
                 this.SetValue(Value);
+        }
+    }
+
+    HandlerEvents_all_data_fine_get(_topic, _msg) {
+        const [chName] = _msg.arg;
+        if (chName == this.Name) {
+            this.EmitEvents_all_data_fine_set({ value: [this.Value] });
         }
     }
 
@@ -248,7 +255,7 @@ class ClassChannelActuator extends ClassChannel_S {
     EmitEvents_all_data_fine_set({ value }) {
         const msg = {
             dest: 'all',
-            com: COM_DATA_FINE_SET,
+            com: COM_ALL_DATA_FINE_SET,
             arg: [this.Name],
             value: [{
                 Name: this.Name,
@@ -264,4 +271,3 @@ class ClassChannelActuator extends ClassChannel_S {
 }
 
 module.exports = ClassChannelActuator;
-

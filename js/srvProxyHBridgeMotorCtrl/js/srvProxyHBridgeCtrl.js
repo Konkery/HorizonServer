@@ -1,117 +1,108 @@
-const ClassBaseService_S = require('./../../srvService/js/srvService');
-// const ClassBaseService_S = require('../../srvService/js/srvService.js');
-
+const ClassProxyActuatorDriver_S = require('../../srvProxyActuatorDriver/js/srvProxyActuatorDriver.js');
 const THIS_NAME = 'proxymhbridge';
-const COM_ALL_DATA_RAW_GET = 'all-data-raw-get';
-const PRIMARY_BUS = 'mhbridgeBus';
 const PROTOCOL = 'mhbridge';
-const CLIENT = 'mhbridge';
+const CLIENT_NAME = 'mhbridge';
+
+const EVENT_PRIMBUS_LIST = ['proxymhbridge-send', 'proxymhbridge-res', 'proxymhbridge-cmd'];
+const BUS_NAMES_LIST = ['mhbridgeBus', 'dataBus'];
+
+const COM_ALL_DATA_FINE_SET = 'all-data-fine-set';
 
 const EVENT_SYSBUS_LIST = ['all-init-stage1-set', 'test-connect'];
-const EVENT_MODBUS_LIST = ['proxymhbridge-send', 'proxymhbridge-res'];
-const BUS_NAMES_LIST = ['sysBus', PRIMARY_BUS, 'logBus'];
 
-class ClassProxyModBusHBridgeMotor_S extends ClassBaseService_S {
+class ClassProxyModBusHBridgeMotor_S extends ClassProxyActuatorDriver_S {
     /**
      * @constructor
      * @description
-     * Конструктор класса логгера
+     * Конструктор класса прокси логгера
      * @param {[ClassBus_S]} _busList - список шин, созданных в проекте
      */
-    constructor({ _busList, _node }) {
-        super({ _name: THIS_NAME, _busNameList: BUS_NAMES_LIST, _busList, _node });
+    constructor({ _busList, _primaryBus, _node }) {
+        super({
+            _name: THIS_NAME,
+            _busList,
+            _primaryBus,
+            _node,
+            _clientName: CLIENT_NAME,
+            _protocol: PROTOCOL,
+            _busNamesList: BUS_NAMES_LIST,
+        });
+        /** @type {Map<string, import('../../srvHBridgeMotor/js/srvHBridgeMotor').IHBridgeConfig>}   */
+        this._SourcesOpts = new Map();
         this.FillEventOnList('sysBus', EVENT_SYSBUS_LIST);
-        this.FillEventOnList(PRIMARY_BUS, EVENT_MODBUS_LIST);
-        this.EmitEvents_logger_log({ level: 'I', msg: 'ProxyModbusHBridgeMotor initialized.' });
+        this.FillEventOnList(this.PrimaryBus, EVENT_PRIMBUS_LIST);
+        this.FillEventOnList('dataBus', [COM_ALL_DATA_FINE_SET]);
+        // this.EmitEvents_logger_log({ level: 'I', msg: 'ProxyModbusHBridgeMotor initialized.' });
     }
 
-    // HandlerEvents_all_init_stage1_set(_topic, _msg) {
-    //     super.HandlerEvents_all_init_stage1_set(_topic, _msg);
-    // }
-    /**
-     * @typedef TypeSourceDesc
-     * @property {string} SourceName
-     * @property {number} ChNum
-     * @property {string} Name 
-     */
-    /**
-     * 
-     * @param {*} _topic 
-     * @param {*} _msg 
-     * @returns {Iterable.<TypeSourceDesc>}
-     */
-    *Sources(_topic, _msg) {
-        for (const source of Object.values(this.SourcesState)) {
-            if (source.Protocol !== PROTOCOL) continue;
-            for (const channel of Object.values(this.ServicesState)) {
-                if (channel.AdvancedOptions &&
-                    channel.AdvancedOptions.SourceName === source.Name) {
-                    yield {
-                        SourceName: source.Name,
-                        ChNum: channel.AdvancedOptions.ChNum,
-                        Name: channel.Name
-                    };
-                }
-            }
+    GetSourceByChName(chName) {
+        for (const [sourceName, { channels }] of this._SourcesOpts.entries()) {
+            if (channels?.includes?.(chName))
+                return sourceName;
         }
     }
+
     /**
-     * @method
-     * @public
-     * @description Отправляет службе mhbridge топик и значение, которое требуется записать
-     * @param {string} _topic 
-     * @param {*} _msg 
+     * @method HandlerEvents_all_init_stage1_set
+     * @async
+     * @description Обработчик события инициализации stage 1. Извлекает и сохраняет настройки источников.
+     * @param {string} _topic - Тема события.
+     * @param {object} _msg - Содержимое сообщения.
      */
+    async HandlerEvents_all_init_stage1_set(_topic, _msg) {
+        super.HandlerEvents_all_init_stage1_set(_topic, _msg);
+
+        for (let source of this.Sources()) {
+            this._SourcesOpts.set(source.Name, source.AdvOpts);
+        }
+    }
+
     HandlerEvents_proxymhbridge_send(_topic, _msg) {
-        // const source = [...this.Sources()].find(_obj => _obj.Name === source_name);
-        let { arg, value } = _msg;
-        let cmd = value[0].value;
-        const chName = _msg.metadata.source;
-        const sourceName = chName ? this.ServicesState[chName]?.Service?.SourceName : undefined;
-        // const [{ cmd, args, value }] = cmd;
+        this.HandlerEvents_send(_msg);
+    }
 
-        if (sourceName != undefined) {
-            this.EmitEvents_mhbridge_cmd({ arg: [sourceName], value: cmd });
+    HandlerEvents_proxymhbridge_res(_topic, _msg) {
+        this.HandlerEvents_res(_msg);
+    }
+    
+    HandlerEvents_proxymhbridge_cmd(_topic, _msg) {
+        const src = _msg.metadata.source;
+        if (src != this.ClientName) return;
+
+        const sourceName = _msg.arg[0];
+        const chNum = _msg.value[0].arg[0];
+        const value = _msg.value[0].value[0];
+        const chName = this._SourcesOpts.get(sourceName)?.channels?.[chNum];
+        if (!chName) return;
+        this.EmitEvents_all_actuator_set(chName, value);
+        this.EmitEvents_all_data_fine_get(chName);
+    }
+
+    HandlerEvents_all_data_fine_set(_topic, _msg) {
+        try {
+            const chName = _msg.arg[0];
+            const sourceName = this.GetSourceByChName(chName);
+            if (!sourceName) return;
+            const { Value } = _msg.value[0]; 
+            const chNum = this._SourcesOpts.get(sourceName)?.channels?.indexOf(chName);
+            if (chNum > -1)
+                this.EmitEvents_mhbridge_ch_set(sourceName, chNum, Value);   
+        } catch (e) {
+            this.EmitEvents_logger_log({ msg: `Error while processing data-fine msg`, level: 'E', obj: _msg });
         }
     }
-    /**
-     * @method 
-     * @param {string} _topic - команда
-     * @param {ClassBusMsg_S} _msg - сообщение
-     */
-    HandlerEvents_proxymhbridge_res(_topic, _msg) {
-        const source_name = _msg.arg[0];
-        const ch_name = Object.values(this.ServicesState).find(obj => obj.Service?.SourceName == source_name)?.Name;
-        if (!ch_name) {
-            this.EmitEvents_logger_log({ level: 'E', msg: `Received msg from ${CLIENT} but no channel found for source ${source_name}.` });
-            return
-        }
+
+    EmitEvents_mhbridge_ch_set(sourceName, chNum, value) {
         const msg = {
-            dest: ch_name,
-            com: COM_ALL_DATA_RAW_GET,
-            arg: [source_name],
+            dest: this.ClientName,
+            com: `${this.ClientName}-ch-set`,
+            arg: [sourceName],
             value: [{
-                com: COM_ALL_DATA_RAW_GET,
-                arg: [ch_name],
-                value: [_msg.value[0]]
+                arg: [chNum],
+                value: [value]
             }]
         }
-        this.EmitMsg(PRIMARY_BUS, msg.com, msg);
-    }
-    /**
-     * @method
-     * @public
-     * @description Отправляет на mhbridge запрос на отправку команды
-     * @param {*} param0 
-     */
-    EmitEvents_mhbridge_cmd({ arg, value }) {
-        const msg = {
-            dest: CLIENT,
-            com: `${CLIENT}-cmd`,
-            arg,
-            value
-        }
-        this.EmitMsg(PRIMARY_BUS, msg.com, msg);
+        this.EmitMsg(this.PrimaryBus, msg.com, msg);
     }
 }
 

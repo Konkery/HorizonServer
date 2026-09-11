@@ -1,79 +1,41 @@
+const ClassBaseService_S = require('./../../srvService/js/srvService');
 const { EventEmitter2 } = require("eventemitter2");
-const ClassBaseService = require('./srvService.js');
-const mqtt = require('mqtt');
-
-/**
- * @typedef {object} MatrixCtrlConfig
- * @property {number} ID
- * @property {string} Status
- * @property {string} Name
- * @property {string} Type
- * @property {string} Property
- * @property {string} Protocol
- * @property {string} DN
- * @property {string} IP
- * @property {string} Port
- * @property {number} SensorChExpected
- * @property {[MatrixCtrlGroupConfig]} Groups
- * @property {TypeMatrixCtrlAdvOpts} AdvOpts
- */
-
-/**
- * @typedef {object} MatrixCtrlGroupConfig
- * @property {number} mbID
- * @property {string} type
- * @property {number} startReg
- * @property {number} numRegs
- * @property {number} interval
- */    
-
-/**
- * @typedef {Object} TypeMatrixCtrlAdvOpts
- * @property {string} sourceAxis
- * @property {object} row
- * @property {string} row.source
- * @property {[number]} row.channels
- * @property {object} col
- * @property {string} col.source
- * @property {[number]} col.channels
- */
-
 /**
  * @typedef {object} TypeCoords
  * @property {number} coords.col - Столбец (начинается с 0)
  * @property {number} coords.row - Строка (начинается с 0)
  */
-
-/**
- * @typedef {object} TypeElectrCurrentState
- * @property {number} IDLE
- * @property {number} WORK_OK
- * @property {number} STUCK
- */
-
+const NAME = 'mmtrxmotor';
+const PRIMARY_BUS = 'mmtrxmotorBus';
 const PROTOCOL = 'mmtrxmotor';
-const BUS_NAME_LIST = ['sysBus', 'logBus', 'mmtrxmotorBus', 'modBusBus'];
+const BUS_NAME_LIST = ['sysBus', 'logBus', PRIMARY_BUS, 'modBusBus'];
 
 const MOTOR_ON = 1;
 const MOTOR_OFF = 0;
+const CH_RES_MAX_TIME = 750;
 
-class ClassModBusMatrixMotor_S extends ClassBaseService {
+class ClassModBusMatrixMotor_S extends ClassBaseService_S {
     /**
      * @typedef {object} TypeMatrixCtrl
-     * @property {KC868} row  
-     * @property {KC868} col 
+     * @property {KC868} rows  
+     * @property {KC868} cols 
      */
-    /** @type {Object<string, TypeMatrixCtrl>} */
-    #_MatrixCtrl = {};
-    /** @type {Object<string, TypeMatrixCtrlAdvOpts>} */
-    #_MatrixOpts = {}
+    // /** @type {Map<string, import('./srvMatrixCtrl').TypeMatrixCtrlAdvOpts>} */
+   /** @type {Map<string, { size: { rows: number, cols: number } }>} */
+    #_SourceOpts = new Map();
+
+    #_ListenChannels = false;
+    /**@type {Map<string, {rows: Array<number>, cols: Array<number>}>} */
+    _SwState = new Map();
+    #_Events = new EventEmitter2();
     
-    constructor({ _busList, _advOpts }) {
-        // передача в супер-конструктор имени службы и списка требуемых шин
-        super({ _name: 'mmtrxmotor', _busNameList: BUS_NAME_LIST, _busList });
+    constructor({ _busList, _primaryBus, _advOpts }) {
+        super({ _name: 'mmtrxmotor', _busNameList: [_primaryBus, ...BUS_NAME_LIST], _busList });
         // this.#_MatrixOpts = _advOpts;
+        this.PrimaryBus = _primaryBus ?? PRIMARY_BUS;
+        this.#_Events = new EventEmitter2();
         this.FillEventOnList('sysBus', ['all-init-stage1-set']);
-        this.FillEventOnList('mmtrxmotorBus', ['mmtrxmotor-cmd']);
+        this.FillEventOnList(this.PrimaryBus, [`${NAME}-cmd`, `${NAME}-ch-set`]);
     }
 
     *Sources() {
@@ -85,21 +47,21 @@ class ClassModBusMatrixMotor_S extends ClassBaseService {
 
     async HandlerEvents_all_init_stage1_set(_topic, _msg) {
         super.HandlerEvents_all_init_stage1_set(_topic, _msg);
-        
-        let mqttSource = Object.values(this.SourcesState).find(s => s.Protocol == 'mqtt');
-        this.mqttC = (await this.#CreateMQTTConnection(mqttSource)).client;
-
+        // TODO: проверить фильтрацию источников
         for (let source of this.Sources()) {
-            this.#_MatrixOpts[source.Name] = { sourceAxis: 'row', ...source.AdvOpts };
-            // /** @type {MatrixCtrlConfig} */
-            // let source = Object.values(this.SourcesState).find(_source => _source.Protocol === PROTOCOL);
-            let rowMbOpts = this.#_MatrixOpts[source.Name].row.source;
-            let colMbOpts = this.#_MatrixOpts[source.Name].col.source;
-            this.#_MatrixCtrl[source.Name] = { 
-                row: new KC868({ mbID: rowMbOpts }, this.mqttC), //TODO
-                col: new KC868({ mbID: colMbOpts }, this.mqttC) 
+            const size = {
+                rows: this.SourcesState[source.Name].AdvOpts.channels.rows.length,
+                cols: this.SourcesState[source.Name].AdvOpts.channels.cols.length
             };
+            this.#_SourceOpts.set(source.Name, { 
+                size,
+            });
+            this._SwState.set(source.Name, {
+                rows: new Array(size.rows).fill(undefined), 
+                cols: new Array(size.cols).fill(undefined)
+            });
         }
+        this.#_ListenChannels = true;
     }
     /**
      * @method
@@ -120,6 +82,7 @@ class ClassModBusMatrixMotor_S extends ClassBaseService {
                 try {
                     await this.On(sourceName, target, ...args);
                 } catch (e) {
+                    this.EmitEvents_logger_log({ msg: `[Matrx] error: ${e}`, obj: e });
                     error = true;
                     // TODO: log
                 }
@@ -129,15 +92,30 @@ class ClassModBusMatrixMotor_S extends ClassBaseService {
                 try {
                     await this.Off(sourceName, target, ...args);
                 } catch (e) {
+                    this.EmitEvents_logger_log({ msg: `[Matrx] error: ${e}`, obj: e });
                     error = true;
-                    break;
                 }
+                break;
             default:
                 break;
         }
         let resArg = [sourceName];
         let resValue = { ...msg.value[0], error };
         this.EmitEvents_proxymmtrxmotor_res({ hash, arg: resArg, value: [resValue] });
+    }
+
+    HandlerEvents_mmtrxmotor_ch_set(_topic, _msg) {
+        const sourceName = _msg.arg[0];
+        const [axis, chNum] = _msg.value[0].arg; // axis is 'rows' | 'cols'
+        const value = _msg.value[0].value[0];
+
+        if (this.#_ListenChannels) {
+            const state = this._SwState.get(sourceName);
+            if (state && state[axis]) {
+                state[axis][chNum] = value;
+                this.#_Events.emit(`${sourceName}.${axis}.${chNum}.value`, value);
+            }
+        }
     }
 
     EmitEvents_proxymmtrxmotor_res({ hash, arg, value }) {
@@ -149,11 +127,7 @@ class ClassModBusMatrixMotor_S extends ClassBaseService {
             value
         };
         
-        this.EmitMsg('mmtrxmotorBus', msg.com, msg);
-    }
-    
-    get MatrixCtrl() {
-        return this.#_MatrixCtrl;
+        this.EmitMsg(this.PrimaryBus, msg.com, msg);
     }
 
     /**
@@ -164,7 +138,8 @@ class ClassModBusMatrixMotor_S extends ClassBaseService {
      * @returns {{row: number, column: number}} An object containing the row and column.
      */
     IndexToPos(sourceName, index) {
-        let width = this.#_MatrixOpts[sourceName].col.channels.length;
+        let width = this.#_SourceOpts.get(sourceName).size.cols;
+        // let width = this.#_MatrixOpts[sourceName].col.channels.length;
         
         return { row: Math.floor(index / width), col: index % width };
     }
@@ -179,23 +154,22 @@ class ClassModBusMatrixMotor_S extends ClassBaseService {
      * @returns {Promise<boolean>}
      */
     async On(sourceName, index, opts) {
+        // TODO: проверять index на валидность
         let { step } = opts ?? {};
         let { col, row } = this.IndexToPos(sourceName, index);
-        let ctrl = this.#_MatrixCtrl[sourceName];
-        let mtrxOpts = this.#_MatrixOpts[sourceName];
-        const sourceIsRow = mtrxOpts.sourceAxis == 'row';
+        let mtrxOpts = this.SourcesState[sourceName].AdvOpts;
+        const sourceAxis = typeof mtrxOpts.sourceAxis =='boolean' ? mtrxOpts.sourceAxis : 'rows';
+        const sourceIsRow = sourceAxis == 'rows';
+        const gndAxis = sourceIsRow ? 'cols' : 'rows';
 
-        let sourceIO = sourceIsRow ? ctrl.row : ctrl.col;
-        let groundIO = sourceIsRow ? ctrl.col : ctrl.row;
-
-        let srcSwChNum = sourceIsRow ? mtrxOpts.row.channels[row] : mtrxOpts.col.channels[col];
-        let gndSwChNum = sourceIsRow ? mtrxOpts.col.channels[col] : mtrxOpts.row.channels[row];
+        let srcSwChNum = sourceIsRow ? row : col;
+        let gndSwChNum = sourceIsRow ? col : row;
 
         switch (step) {
             case 1:
-                return await this.Switch(groundIO, gndSwChNum, MOTOR_ON);
+                return await this.Switch(sourceName, sourceAxis, srcSwChNum, MOTOR_ON);
             case 2:
-                return await this.Switch(sourceIO, srcSwChNum, MOTOR_ON);
+                return await this.Switch(sourceName, gndAxis, gndSwChNum, MOTOR_ON);
             default:
                 return Promise.reject(`Invaild request: step must be specified and be in range 1..2`);
         }
@@ -212,26 +186,46 @@ class ClassModBusMatrixMotor_S extends ClassBaseService {
      */
     async Off(sourceName, index, opts) {
         let { step } = opts ?? {};
+        if (typeof index != 'number') {
+            return await this.SwitchOffAll(sourceName);
+        }
         let { col, row } = this.IndexToPos(sourceName, index);
-        let ctrl = this.#_MatrixCtrl[sourceName];
-        let mtrxOpts = this.#_MatrixOpts[sourceName];
-        const sourceIsRow = mtrxOpts.sourceAxis == 'row'
+        let mtrxOpts = this.SourcesState[sourceName].AdvOpts;
+        const sourceAxis = typeof mtrxOpts.sourceAxis =='boolean' ? mtrxOpts.sourceAxis : 'rows';
+        const sourceIsRow = sourceAxis == 'rows';
+        const gndAxis = sourceIsRow ? 'cols' : 'rows';
 
-        let sourceIO = sourceIsRow ? ctrl.row : ctrl.col;
-        let groundIO = sourceIsRow ? ctrl.col : ctrl.row;
-        /*if (!source ?? !ground)
-            return Promise.reject(`No element [${row}][${col}]`);*/
-
-        let srcSwChNum = sourceIsRow ? mtrxOpts.row.channels[row] : mtrxOpts.col.channels[col];
-        let gndSwChNum = sourceIsRow ? mtrxOpts.col.channels[col] : mtrxOpts.row.channels[row];
+        let srcSwChNum = sourceIsRow ? row : col;
+        let gndSwChNum = sourceIsRow ? col : row;
 
         switch (step) {
+            case undefined:
+                return await this.SwitchOffAll(sourceName);
             case 1:
-                return await this.Switch(groundIO, gndSwChNum, MOTOR_OFF);
+                return await this.Switch(sourceName, sourceAxis, srcSwChNum, MOTOR_OFF);
             case 2:
-                return await this.Switch(sourceIO, srcSwChNum, MOTOR_OFF);
+                return await this.Switch(sourceName, gndAxis, gndSwChNum, MOTOR_OFF);
             default:
                 return Promise.reject(`Invaild request: step must be specified and be in range 1..2`);
+        }
+    }
+
+    async SwitchOffAll(sourceName) {
+        for (let rowNum = 0; rowNum < this.#_SourceOpts.get(sourceName).size.rows; rowNum++) {
+            try {
+                await this.Switch(sourceName, 'rows', rowNum, MOTOR_OFF);
+                // console.log(`[Matrix] ${sourceName} row ${rowNum} OFF`);
+            } catch (e) {
+                this.EmitEvents_logger_log({ msg: `[Matrix] failed to ${sourceName} row ${rowNum} OFF` });
+            }
+        }
+        for (let colNum = 0; colNum < this.#_SourceOpts.get(sourceName).size.cols; colNum++ ) {
+            try {
+                await this.Switch(sourceName, 'cols', colNum, MOTOR_OFF);
+                // console.log(`[Matrix] ${sourceName} col ${colNum} OFF`);
+            } catch (e) {
+                this.EmitEvents_logger_log({ msg: `[Matrix] failed to ${sourceName} col ${colNum} OFF` });
+            }
         }
     }
 
@@ -240,65 +234,34 @@ class ClassModBusMatrixMotor_S extends ClassBaseService {
     }
     /**
      * 
-     * @param {KC868} io 
+     * @param {string} sourceName 
+     * @param {string} axis
+     * @param {number} chNum 
      * @param {number} value 
      */
-    async Switch(io, chNum, value) {
-        io.SetValue(chNum, value);
+    async Switch(sourceName, axis, chNum, value) {
+        const msg = {
+            com: `proxymmtrxmotor-cmd`,
+            dest: 'proxymmtrxmotor',
+            arg: [sourceName],
+            value: [{
+                arg: [axis, chNum],
+                value: [value],
+            }]
+        }
+        this.EmitMsg(this.PrimaryBus, msg.com, msg);
+        
+        const mtrxOpts = this.SourcesState[sourceName].AdvOpts;
+        const sourceIsRow = mtrxOpts.sourceAxis === 'rows';
 
-        await io.Events.waitFor(`${chNum}-value`, {
-            timeout: 50, //TODO add const
-            filter: (Value) => Value == value
-        }).catch(() => {
-            throw new Error(`Element [$${io.addr}:${chNum}] error: no response from switch "${chNum}"`);
+        const state = this._SwState.get(sourceName);
+        if (state?.[axis]?.[chNum] === value) return;
+
+        await this.#_Events.waitFor(`${sourceName}.${axis}.${chNum}.value`, {
+            timeout: CH_RES_MAX_TIME,
+            filter: (v) => v === value
         });
-    }
-
-    #CreateMQTTConnection(_source) {
-        return new Promise(async (res, rej) => {
-            let options = Object.assign({
-                port:     _source.Port,
-                username: _source.Login,
-                password: _source.Password,
-            }, _source.ConnectOpts);
-            options.protocol ??= 'mqtt'; //по умолчанию mqtt://
-
-            let url = `${options.protocol}://${(_source.IP) ? _source.IP : _source.DN}`;
-
-            try {
-                const connection = await mqtt.connectAsync(url, options);
-                res({ source: _source, client: connection });
-            } catch (e) {
-                this.EmitEvents_logger_log({ msg: `Error trying connect to ${url}`, level: 'E', obj: e });
-                res({ source: _source, client: null });
-            }
-        });
-    }
+    } 
 }
 
-class KC868 {
-    Events = new EventEmitter2()
-    /**
-     * 
-     * @param {MatrixCtrlGroupConfig} opts 
-     */
-    constructor(opts, mqttC) {
-        this.addr = opts.mbID;
-        this.mqttC = mqttC;
-    }
-    SetValue(chNum, value) {
-        setTimeout(() => {
-            try {
-                this.mqttC.publish(`/Emulator/KC868/${this.addr}/${chNum}`, typeof value == 'string' ? value : JSON.stringify(value));
-            } catch (e) {}
-            this.OnSetValue(chNum, value);
-            this.Events.emit(`${chNum}-value`, value);
-        }, 0);
-    }
-    OnSetValue(chNum, value) {
-
-    }
-}
-
-// let a = new ClassSpiralSectionStorage({advOpts: {rows:12, cols: 8}});
 module.exports = ClassModBusMatrixMotor_S;
