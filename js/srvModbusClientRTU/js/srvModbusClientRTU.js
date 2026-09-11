@@ -1,170 +1,35 @@
 const ClassModbusBase_S = require('./../../srvModbusBase/js/srvModbusBase');
 
-const CONNECTION_TIMEOUT = 5000;
-const PRIMARY_BUS = 'modburtuBus';
-
-EVENT_SYSBUS_LIST = ['all-init-stage1-set', 'test-connect', 'all-disconnect'];
-EVENT_MODBUS_LIST = ['modbusclientrtu-send'];
-BUS_NAMES_LIST = ['sysBus', PRIMARY_BUS, 'logBus'];
-const PROTOCOL = 'modbusrtu';
+const CONNECTION_TIMEOUT = 1000;
 const THIS_NAME = 'modbusclientrtu';
-const DEFAULT_RATE = 9600;
 
-REG_OUT = {
-    'Coil' : 0x01,
-    'discInput': 0x02, 
-    'holdReg': 0x03, 
-    'inputReg': 0x04
-};
-REG_IN = {
-    'Coil' : 0x05,
-    'holdReg': 0x06,
-    'Coils' : 0x0F,
-    'holdRegs': 0x10
-};
 
 class ModbusClientRTU extends ClassModbusBase_S {
-    #_Sources;
+    #_Protocol;
     /**
      * @constructor
      * @description
-     * Конструктор класса логгера
+     * Конструктор класса
      * @param {[ClassBus_S]} _busList - список шин, созданных в проекте
      */
-    constructor({ _busList, _node }) {
-        super({ _name: THIS_NAME, _busNameList: BUS_NAMES_LIST, _busList, _node, _type: 'RTU' });
-        this.#_Sources = {};
-        this.FillEventOnList('sysBus', EVENT_SYSBUS_LIST);
-        this.FillEventOnList(PRIMARY_BUS, EVENT_MODBUS_LIST);
-        this.EmitEvents_logger_log({level: 'I', msg: 'MBClient initialized.'});
+    constructor({ _busList, _primaryBus, _node, _protocol }) {
+        super({ _name: THIS_NAME, _busNameList: ['sysBus', _primaryBus, 'logBus'], _busList, _node, _type: 'RTU' });
+        this.#_Protocol = _protocol;
     }
+    
     /**
-     * @method
-     * @description Запускает событие proxymodbus-msg-get
-     * @returns msg         - отправляемое сообщение
-     */
-    EmitEvents_proxymodbusrtu_msg_get({arg, value}) {
-        const msg = {
-            dest: 'proxymodbusrtu',
-            com: 'proxymodbusrtu-msg-get',
-            arg,
-            value
-        };
-        this.EmitMsg(PRIMARY_BUS, msg.com, msg);
-    }
-    /**
-     * @method
-     * @description Обработчик события, запускает подключение к источникам
-     * @param {String} _topic       - топик сообщения 
-     * @param {Object} _msg         - само сообщение
-     */
-    HandlerEvents_test_connect(_topic, _msg) {
-        this.EmitEvents_logger_log({level: 'I', msg: 'Connection starting. . .'});
-        this.Connect();
-    }
-     /**
      * @method
      * @description Обработчик события, запускает отправку сообщения по указанному сокету
      * @param {String} _topic       - топик сообщения 
      * @param {Object} _msg         - само сообщение
      */
     HandlerEvents_modbusclientrtu_send(_topic, _msg) {
-        try {
-            const [source_name] = _msg.arg[0];
-            const chNum = _msg.arg[1];
-            const [value] = _msg.value;
-            const [val] = value.value;
-
-            if (this.#_Sources[source_name].groups == undefined &&
-                    this.#_Sources[source_name].groups.length == 0)
-                throw `No specified channel groups for ${source_name}`;
-
-            let dest_group = this.#_Sources[source_name].groups.find(group => chNum >= group.startReg && chNum <= group.startReg + group.numRegs);
-            if (dest_group === undefined)
-                throw `Cannot find channel '${chNum}' in configuration of ${source_name}`;
-
-            let comm = {
-                id: REG_IN[group.type],
-                reg: chNum,
-                len: 0,
-                dat: val,
-                mbID: dest_group.mbID
-            }
-            this.Queue_client_command(source.client, comm, (data) => {
-                data.data.forEach((dat, i) => {
-                    this.EmitEvents_proxymodbusrtu_msg_get({arg: [source_name, i + chNum], value: [dat]});
-                })
-            })
-        }
-        catch (e) {
-            this.EmitEvents_logger_log({level: 'W', msg: `Failed to send command via modbus protocol: ${e.message}`, obj: {exception: e.toString()}});
-        }
-    }
-    /**
-     * @method
-     * @description Обработчик события, закрывает все существующие сокеты
-     * @param {String} _topic       - топик сообщения 
-     * @param {Object} _msg         - само сообщение
-     */
-    HandlerEvents_all_disconnect(_topic, _msg) {
-        Object.values(this.#_Sources).forEach(source => {
-            source.close();
-        });
-    }
-
-    Add_new_source ( _source ) {
-        let name = _source.Name;
-        let serial = _source.Serial;
-        let baud = _source.Baudrate || DEFAULT_RATE;
-
-        let client;
-
-        let usedSource = Object.values(this.#_Sources)
-            .find(source => (source.client.serial == serial && source.client.baud == baud));
-        if (usedSource == undefined) {
-            client = {
-                mbclient: this.Initialize_modbus_client({serial: serial, baudrate: baud}), 
-                commQueue: [], 
-                isOccupied: false, 
-                serial: serial, 
-                baud: baud
-            };
-        }
-        else {
-            client = usedSource.client;
-        }
-
-        this.#_Sources[name] = {client: client, groups: _source.Groups};
-    }
-
-    /**
-     * @method
-     * @description Начинает циклический опрос групп каналов по источникам
-     */
-    Start() {
-        Object.entries(this.#_Sources).forEach(([name, source]) => {
-            if (source.groups != undefined && source.groups.length > 0) {
-                source.groups.forEach((group) => {
-                    setInterval(() => {
-                        let comm = {
-                            id: REG_OUT[group.type],
-                            reg: group.startReg,
-                            len: group.numRegs,
-                            dat: 0,
-                            mbID: group.mbID
-                        }
-                        this.Queue_client_command(source.client, comm, (data) => {
-                            if (data == null) { this.EmitEvents_logger_log({level: 'W', msg: `No data recieved from: ${name}`, obj: source.client}); }
-                            else {
-                                data.data.forEach((dat, i) => {
-                                    this.EmitEvents_proxymodbusrtu_msg_get({arg: [name, i + group.startReg], value: [dat]});
-                                })
-                            }
-                        })
-                    },group.interval);
-                })
-            }
-        })
+        const [source_name] = _msg.arg[0];
+        const chNum = _msg.arg[1];
+        const [value] = _msg.value;
+        const [val] = value.value;
+       
+        this.Modbus_client_send(source_name, chNum, val);
     }
 
     /**
@@ -174,18 +39,18 @@ class ModbusClientRTU extends ClassModbusBase_S {
     Connect() {
         let sourcesCount = 0;
         let tOut = setTimeout(() => {
-            this.EmitEvents_logger_log({level: 'I', msg: `Connections done!`, obj: this.SourcesState});
-            this.Start();
+            this.EmitEvents_logger_log({level: 'I', msg: `Connections done by modbusRTU!`});
+            this.Start_sensor_reading();
         }, CONNECTION_TIMEOUT);
         Object.values(this.SourcesState)
-            .filter(source => source.Protocol === PROTOCOL && !source.IsConnected && source.CheckProcess && source.Status === 'active')
+            .filter(source => source.Protocol === this.#_Protocol && !source.IsConnected && source.CheckProcess && source.Status === 'active')
             .forEach((source) => {
-                this.Add_new_source(source);
+                this.Add_new_source(source, {dest: 'proxymodbusrtu', com: 'proxymodbusrtu-msg-get'});
                 sourcesCount++;
         });
         if (sourcesCount == 0) {
             clearTimeout(tOut);
-            this.EmitEvents_logger_log({level: 'I', msg: `No unconnected sources found!`, obj: this.SourcesState});
+            this.EmitEvents_logger_log({level: 'I', msg: `No unconnected sources found!`});
         }
     }
 }

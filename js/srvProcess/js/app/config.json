@@ -18,7 +18,7 @@
             "Module": "./../../srvLogger/js/srvLogger",
             "Options": {
                 "host": "10.110.71.231",
-                "port": 5142,
+                "port": 5145,
                 "hostname": "HUB-Low",
                 "console": false
             }
@@ -38,7 +38,7 @@
             "Status": "stopped",
             "Protocol": "sys",
             "PrimaryBus": "dataBus",
-            "Module": "./../../srvProxyChanne/js/srvProxyChanne",
+            "Module": "./../../srvProxyChannel/js/srvProxyChannel",
             "Options": {}
         },
         {
@@ -76,6 +76,8 @@
         "modbusNLS": "./../../srvRLNLS/js/srvRLNLS",
         "proxymodbusnls": "./../../srvProxyRLNLS/js/srvProxyRLNLS",
         "proxymodbuskcs": "./../../srvProxyKinCony/js/srvProxyKinCony",
-        "modbusKCS": "./../../srvKinCony/js/srvKinCony"
+        "modbusKCS": "./../../srvKinCony/js/srvKinCony",
+        "modbusclientrtu": "./../../srvModbusClientRTU/js/srvModbusClientRTU",
+        "proxymodbusrtu": "./../../srvProxyModbusRTU/js/srvProxyModbusRTU"
     }
 }

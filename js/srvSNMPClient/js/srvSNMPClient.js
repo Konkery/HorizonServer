@@ -1,29 +1,30 @@
 const ClassBaseService_S = require('./../../srvService/js/srvService');
 const snmp = require ("net-snmp");
 
-const CONNECTION_TIMEOUT = 5000;
-const PRIMARY_BUS = 'snmpBus';
+const CONNECTION_TIMEOUT = 1000;
 
-EVENT_SYSBUS_LIST = ['all-init-stage1-set', 'test-connect', 'all-disconnect'];
+EVENT_SYSBUS_LIST = ['all-init-stage1-set', 'source-connect', 'all-disconnect'];
 EVENT_SNMP_LIST = ['snmpclient-send'];
-BUS_NAMES_LIST = ['sysBus', PRIMARY_BUS, 'logBus'];
-const PROTOCOL = 'snmp';
 const THIS_NAME = 'snmpclient';
 
 
 class SNMPClient extends ClassBaseService_S {
     #_Sources;
+    #_Protocol;
+    #_PrimaryBus;
     /**
      * @constructor
      * @description
      * Конструктор класса логгера
      * @param {[ClassBus_S]} _busList - список шин, созданных в проекте
      */
-    constructor({ _busList, _node }) {
-        super({ _name: THIS_NAME, _busNameList: BUS_NAMES_LIST, _busList, _node });
+    constructor({ _busList, _primaryBus, _node, _protocol }) {
+        super({ _name: THIS_NAME, _busNameList: ['sysBus', _primaryBus, 'logBus'], _busList, _node });
         this.#_Sources = {};
+        this.#_Protocol = _protocol;
+        this.#_PrimaryBus = _primaryBus;
         this.FillEventOnList('sysBus', EVENT_SYSBUS_LIST);
-        this.FillEventOnList(PRIMARY_BUS, EVENT_SNMP_LIST);
+        this.FillEventOnList(this.#_PrimaryBus, EVENT_SNMP_LIST);
         this.EmitEvents_logger_log({level: 'I', msg: 'SNMPClient initialized.'});
     }
     /**
@@ -38,7 +39,7 @@ class SNMPClient extends ClassBaseService_S {
             arg,
             value
         };
-        this.EmitMsg(PRIMARY_BUS, msg.com, msg);
+        this.EmitMsg(this.#_PrimaryBus, msg.com, msg);
     }
     /**
      * @method
@@ -165,7 +166,7 @@ class SNMPClient extends ClassBaseService_S {
             this.Start();
         }, CONNECTION_TIMEOUT);
         Object.values(this.SourcesState)
-            .filter(source => source.Protocol === PROTOCOL && !source.IsConnected && source.CheckProcess && source.Status === 'active')
+            .filter(source => source.Protocol === this.#_Protocol && !source.IsConnected && source.CheckProcess && source.Status === 'active')
             .forEach((source) => {
                 const name = (source.DN ? source.DN : source.IP);
                 this.#_Sources[source.Name] = {session: snmp.createSession(name, "public"), baseOID: source.OID, groups: source.Groups};

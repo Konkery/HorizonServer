@@ -1,19 +1,19 @@
 const ClassBaseService_S = require('./../../srvService/js/srvService');
 
-const THIS_NAME = 'proxymodbusnls';
+const THIS_NAME = 'proxymodbuswb';
 const COM_ALL_DATA_RAW_GET = 'all-data-raw-get';
 
 EVENT_SYSBUS_LIST = ['all-init-stage1-set', 'source-connect'];
-EVENT_MODBUS_LIST = ['proxymodbusnls-send', 'proxymodbusnls-msg-get'];
+EVENT_MODBUS_LIST = ['proxymodbuswb-send', 'proxymodbuswb-msg-get'];
 
-class ProxyRLNLS extends ClassBaseService_S {
+class ProxyWirenBoard extends ClassBaseService_S {
     #_SourceMapNames;
     #_Protocol;
     #_PrimaryBus;
     /**
      * @constructor
      * @description
-     * Конструктор класса
+     * Конструктор класса логгера
      * @param {[ClassBus_S]} _busList - список шин, созданных в проекте
      */
     constructor({ _busList, _primaryBus, _node, _protocol }) {
@@ -23,7 +23,7 @@ class ProxyRLNLS extends ClassBaseService_S {
         this.#_PrimaryBus = _primaryBus;
         this.FillEventOnList('sysBus', EVENT_SYSBUS_LIST);
         this.FillEventOnList(this.#_PrimaryBus, EVENT_MODBUS_LIST);
-        this.EmitEvents_logger_log({level: 'I', msg: 'ProxyModbusNLS initialized.'});
+        this.EmitEvents_logger_log({level: 'I', msg: 'ProxyModbusWB initialized.'});
     }
 
     HandlerEvents_all_init_stage1_set(_topic, _msg) {
@@ -54,12 +54,12 @@ class ProxyRLNLS extends ClassBaseService_S {
      * @param {string} _topic 
      * @param {*} _msg 
      */
-    HandlerEvents_proxymodbusnls_send(_topic, _msg) {
+    HandlerEvents_proxymodbuswb_send(_topic, _msg) {
         const source_name = _msg.metadata.source;
         const source = this.#_SourceMapNames.find(_obj => _obj.Name === source_name);
 
         if (source != undefined) {
-            this.EmitEvents_modbusclientnls_send({ arg: [source.source, source.chNum], value: [_msg.value[0]]});
+            this.EmitEvents_modbusclientwb_send({ arg: [source.source, source.chNum], value: [_msg.value[0]]});
         }
     }
     /**
@@ -68,7 +68,7 @@ class ProxyRLNLS extends ClassBaseService_S {
      * @param {string} _topic - команда
      * @param {ClassBusMsg_S} _msg - сообщение
      */
-    HandlerEvents_proxymodbusnls_msg_get(_topic, _msg) {
+    HandlerEvents_proxymodbuswb_msg_get(_topic, _msg) {
         // извлечение "ядра" сообщения, составленного службой контроллера
         // LHP.Unpack
         //const msg_from_plc = JSON.parse(_msg.value[0] ?? '');
@@ -79,20 +79,21 @@ class ProxyRLNLS extends ClassBaseService_S {
 
         if (channel != undefined) {
             const ch_name = channel.Name;
+
             const msg = {
-            dest: ch_name,
-            com: COM_ALL_DATA_RAW_GET,
-            arg: [source_name],
-            value: [{
+                dest: ch_name,
                 com: COM_ALL_DATA_RAW_GET,
-                arg: [ch_name],
-                value: [_msg.value[0]]
+                arg: [source_name],
+                value: [{
+                    com: COM_ALL_DATA_RAW_GET,
+                    arg: [ch_name],
+                    value: [_msg.value[0]]
                 }]
             }
+            //console.log(ch_name + ': ' + _msg.value[0]);
             this.EmitMsg(this.#_PrimaryBus, msg.com, msg);
         }
-        
-        //console.log(ch_name + ': ' + _msg.value[0]);
+        //
     }
     /**
      * @method
@@ -100,10 +101,10 @@ class ProxyRLNLS extends ClassBaseService_S {
      * @description Отправляет на MQTT Client запрос на отправку сообщения на брокер
      * @param {*} param0 
      */
-    EmitEvents_modbusclientnls_send({ arg, value }) {
+    EmitEvents_modbusclientwb_send({ arg, value }) {
         const msg = {
-            dest: 'modbusNLS',
-            com: 'modbusclientnls-send',
+            dest: 'modbusWB',
+            com: 'modbusclientwb-send',
             arg,
             value
         }
@@ -111,4 +112,4 @@ class ProxyRLNLS extends ClassBaseService_S {
     }
 }
 
-module.exports = ProxyRLNLS;
+module.exports = ProxyWirenBoard;

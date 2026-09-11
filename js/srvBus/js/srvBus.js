@@ -20,7 +20,7 @@ class ClassBus_S extends EventEmitter {
      */
     constructor(_name) {
         // реализация Singleton
-        // const instance = ClassBus_S.#_BusInstances.find(bus => bus.Name == _name);
+        const instance = ClassBus_S.#_BusInstances.find(bus => bus.Name == _name);
         if (instance instanceof ClassBus_S) return instance;
 
         super();
@@ -32,7 +32,7 @@ class ClassBus_S extends EventEmitter {
         ClassBus_S.#_BusInstances.push(this);
         this.ipcout = null;
         this.ipcout = null;
-        this.setMaxListeners(50);
+        this.setMaxListeners(100);
     }
 
     /**

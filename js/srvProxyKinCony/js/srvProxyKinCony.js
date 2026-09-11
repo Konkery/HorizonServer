@@ -1,43 +1,52 @@
 const ClassBaseService_S = require('./../../srvService/js/srvService');
 
-const THIS_NAME = 'proxymodbuskcs';
 const COM_ALL_DATA_RAW_GET = 'all-data-raw-get';
-const PRIMARY_BUS = 'modbuskcsBus';
-const PROTOCOL = 'mbkcs';
 
-EVENT_SYSBUS_LIST = ['all-init-stage1-set', 'test-connect'];
-EVENT_MODBUS_LIST = ['proxymodbuskcs-send', 'proxymodbuskcs-msg-get'];
-BUS_NAMES_LIST = ['sysBus', PRIMARY_BUS, 'logBus'];
+const EVENT_SYSBUS_LIST = ['all-init-stage1-set', 'source-connect'];
 
 class ProxyKinCony extends ClassBaseService_S {
     #_SourceMapNames;
+    #_Protocol;
+    #_PrimaryBus;
+    #_Name;
+    #_dest;
+    #_com;
     /**
      * @constructor
      * @description
      * Конструктор класса логгера
      * @param {[ClassBus_S]} _busList - список шин, созданных в проекте
      */
-    constructor({ _busList, _node }) {
-        super({ _name: THIS_NAME, _busNameList: BUS_NAMES_LIST, _busList, _node });
+    constructor({ _busList, _primaryBus, _node, _protocol, _Name }) {
+        super({ _name: _Name, _busNameList: ['sysBus', _primaryBus, 'logBus'], _busList, _node });
         this.#_SourceMapNames = [];
+        this.#_Protocol = _protocol;
+        this.#_PrimaryBus = _primaryBus;
+        this.#_Name = _Name;
+        this.#_dest = `modbusKCS${this.#_Name.includes('2') ? '2' : ''}`;
+        this.#_com = `modbusclientkcs${this.#_Name.includes('2') ? '2' : ''}-send`;
+
+        this[`HandlerEvents_${this.#_Name}_send`] = this.HandlerEvents_proxymodbuskcs_send.bind(this);
+        this[`HandlerEvents_${this.#_Name}_msg_get`] = this.HandlerEvents_proxymodbuskcs_msg_get.bind(this);
+
         this.FillEventOnList('sysBus', EVENT_SYSBUS_LIST);
-        this.FillEventOnList(PRIMARY_BUS, EVENT_MODBUS_LIST);
-        this.EmitEvents_logger_log({level: 'I', msg: 'ProxyModbusKCS initialized.'});
+        this.FillEventOnList(this.#_PrimaryBus, [`${this.#_Name}-send`, `${this.#_Name}-msg-get`]);
+        this.EmitEvents_logger_log({level: 'I', msg: 'ProxyModbusKCS initialized.'});       
     }
 
     HandlerEvents_all_init_stage1_set(_topic, _msg) {
         super.HandlerEvents_all_init_stage1_set(_topic, _msg);
 
         Object.values(this.SourcesState)
-            .filter(_source => _source.Protocol === PRIMARY_BUS)  
+            .filter(_source => _source.Protocol === this.#_Protocol)  
             .forEach(_source => {
                 _source.CheckProxy = true;
-                _source.PrimaryBus = PRIMARY_BUS;
+                _source.PrimaryBus = this.#_PrimaryBus;
             });
     }
-    HandlerEvents_test_connect(_topic, _msg) {
+    HandlerEvents_source_connect(_topic, _msg) {
          Object.values(this.SourcesState)
-            .filter(_source => _source.Protocol === PROTOCOL)  
+            .filter(_source => _source.Protocol === this.#_Protocol)  
             .forEach(_source =>{
                 Object.values(this.ServicesState)
                     .filter(_channel => _channel.AdvancedOptions && _channel.AdvancedOptions.SourceName === _source.Name)
@@ -61,6 +70,7 @@ class ProxyKinCony extends ClassBaseService_S {
             this.EmitEvents_modbusclientkcs_send({ arg: [source.source, source.chNum], value: [_msg.value[0]]});
         }
     }
+
     /**
      * @method 
      * @description Вызывается при обработке события 'proxywsc_msg_get', который инициируется WSC
@@ -68,16 +78,12 @@ class ProxyKinCony extends ClassBaseService_S {
      * @param {ClassBusMsg_S} _msg - сообщение
      */
     HandlerEvents_proxymodbuskcs_msg_get(_topic, _msg) {
-        // извлечение "ядра" сообщения, составленного службой контроллера
-        // LHP.Unpack
-        //const msg_from_plc = JSON.parse(_msg.value[0] ?? '');
-        //const [ source_name ] = _msg.arg;
-        //const hash = this.#GetMsgHash(msg_from_plc.com, source_name);
         const source_name = _msg.arg[0];
-        const source = this.#_SourceMapNames.find(obj => obj.chNum == _msg.arg[1] && obj.source == source_name);
 
-        if (source != undefined) {
-            const ch_name = source.Name;
+        const channel = this.#_SourceMapNames.find(obj => obj.chNum == _msg.arg[1] && obj.source == source_name);
+
+        if (channel != undefined) {
+            const ch_name = channel.Name;
 
             const msg = {
                 dest: ch_name,
@@ -89,10 +95,8 @@ class ProxyKinCony extends ClassBaseService_S {
                     value: [_msg.value[0]]
                 }]
             }
-            this.EmitMsg(PRIMARY_BUS, msg.com, msg);
+            this.EmitMsg(this.#_PrimaryBus, msg.com, msg);
         }
-        
-        //console.log(ch_name + ': ' + _msg.value[0]);
     }
     /**
      * @method
@@ -102,12 +106,13 @@ class ProxyKinCony extends ClassBaseService_S {
      */
     EmitEvents_modbusclientkcs_send({ arg, value }) {
         const msg = {
-            dest: 'modbusKCS',
-            com: 'modbusclientkcs-send',
+            dest: this.#_dest,
+            com: this.#_com,
             arg,
             value
         }
-        this.EmitMsg(PRIMARY_BUS, msg.com, msg);
+        
+        this.EmitMsg(this.#_PrimaryBus, msg.com, msg);
     }
 }
 

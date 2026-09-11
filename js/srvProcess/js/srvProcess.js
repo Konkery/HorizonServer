@@ -5,13 +5,13 @@ const ClassBaseService_S = require('./../../srvService/js/srvService');
  * @constant
  * Таймаут проверки Process запущенных служб
  */
-const PROCESS_CHECK_TIMEOUT = 2000;
+const PROCESS_CHECK_TIMEOUT = 500;
 /**
  * @constant
  * Таймаут перед тем, как Process возбудит событие register
  */
-const PROCESS_BUS_TIMEOUT = 1000;
-const PROCESS_DB_TIMEOUT = 5000;
+const PROCESS_BUS_TIMEOUT = 500;
+const PROCESS_DB_TIMEOUT = 500;
 
 const EVENT_SYSBUS_LIST = ['all-init-stage1-set','process-ws-connect-done', 'process-mb-connect-done'];
 const EVENT_MDBBUS_LIST = ['providermdb-init-stage0-get'];
@@ -186,10 +186,10 @@ class ClassProcessSrv extends ClassBaseService_S {
      * @description Запускает событие all_connect
      * @returns msg
      */
-    EmitEvents_test_connect() {
+    EmitEvents_source_connect() {
         const msg = {
             dest: 'all',
-            com: 'test-connect',
+            com: 'source-connect',
             arg: [],
             value: []
         }
@@ -238,7 +238,7 @@ class ClassProcessSrv extends ClassBaseService_S {
                     }
                     if (service.Importance === 'auxilary' && service.Protocol === 'sys') {
                         try {
-                            service.Service = new (require(config[service.Name]))({_busList: this.#_GBusList, _node: this.#_Node}, service.AdvancedOptions);
+                            service.Service = new (require(config[service.Name]))({_busList: this.#_GBusList, _primaryBus: service.PrimaryBus, _node: this.#_Node}, service.AdvancedOptions);
                             this.#_ServicesState[service.Name] = service;
                         }
                         catch (e) {
@@ -262,19 +262,26 @@ class ClassProcessSrv extends ClassBaseService_S {
                                 if (!this.#_GBusList[service.PrimaryBus]) {
                                     this.CreateBus(service.PrimaryBus);
                                 }
-                                service.Service = new (require(config[service.Name]))({_busList: this.#_GBusList, _node: this.#_Node});
-                                this.#_ServicesState[service.Name] = service;
-                                if (service.Importance === 'exploitary' && !this.#_ServicesState[service.AdvancedOptions.host]) {
+                                if (service.Importance === 'exploitary') {
                                     let hostService = _dbServices.filter(host => host.Name === service.AdvancedOptions.host)[0];
-                                    if (!this.#_GBusList[hostService.PrimaryBus]) {
+                                    if (this.#_GBusList[hostService.PrimaryBus] == undefined) {
                                         this.CreateBus(hostService.PrimaryBus);
                                     }
-                                    hostService.Service = new (require(config[hostService.Name]))({_busList: this.#_GBusList, _node: this.#_Node});
-                                    this.#_ServicesState[hostService.Name] = hostService;
+                                    if (this.#_ServicesState[hostService.Name] == undefined) {
+                                        hostService.Service = new (require(config[hostService.Name]))({_busList: this.#_GBusList, _primaryBus: hostService.PrimaryBus, _node: this.#_Node, _protocol: hostService.Protocol.toLowerCase(), _Name: hostService.Name});
+                                        this.#_ServicesState[hostService.Name] = hostService;
+                                    }
+
+                                    service.Service = new (require(config[service.Name]))({_busList: this.#_GBusList, _primaryBus: service.PrimaryBus, _node: this.#_Node, _protocol: protocol, _host: service.AdvancedOptions.host, _expBus: hostService.PrimaryBus, _Name: service.Name});
+                                    this.#_ServicesState[service.Name] = service;
                                 }
+                                else {
+                                    service.Service = new (require(config[service.Name]))({_busList: this.#_GBusList, _primaryBus: service.PrimaryBus, _node: this.#_Node, _protocol: protocol, _Name: service.Name});
+                                    this.#_ServicesState[service.Name] = service;
+                                }                                
                             }
                             catch (e) {
-                                console.log(`Failed to create service: ${service}\n${e}`);
+                                console.log(`Failed to create service: ${service.Name}\n${e}`);
                             }
                     })
                     source.CheckProcess = true;
@@ -284,7 +291,7 @@ class ClassProcessSrv extends ClassBaseService_S {
                 catch (e) {
                     console.log(`_dbSources: ${e}`);
                 }
-            })
+            });
         
             // Создаём каналы
             _dbChannels.forEach(channel => {
@@ -292,6 +299,13 @@ class ClassProcessSrv extends ClassBaseService_S {
                     const source = this.#_SourcesState[channel.SourceName];
                     if (typeof source === 'undefined') {
                         this.EmitEvents_logger_log({level: 'W', msg: `Cannot find source '${channel.SourceName}' for channel '${channel.Name}'.`});
+                    }
+                    else if (typeof source === 'virtual') {
+                        let chService = Object.assign({}, _dbTemplates.find(template => template.Protocol == 'virtual'));
+                        chService.AdvancedOptions = channel;
+                        chService.Service = new (require(config[channel.ChType]))({_busList: this.#_GBusList, _busNameList: chService.BusList.concat([chService.PrimaryBus]), _advOpts: channel});
+                        chService.Name = chService.Service.Name;
+                        this.#_ServicesState[chService.Name] = chService;
                     }
                     else if (source.Property.includes('r')) {
                         let chService = Object.assign({}, _dbTemplates.find(template => template.Protocol == source.Protocol));
@@ -321,7 +335,7 @@ class ClassProcessSrv extends ClassBaseService_S {
                     this.EmitEvents_logger_log({level: 'I', msg: 'System startup finished!', obj: {services: srvList}});
                     /* debugstart */
                     console.log("System startup finished!");
-                    this.EmitEvents_test_connect();
+                    this.EmitEvents_source_connect();
                     /* debugend */
                 }, PROCESS_CHECK_TIMEOUT);
             }, PROCESS_BUS_TIMEOUT);

@@ -63,15 +63,21 @@ class ClassProxyLogger extends ClassBaseService_S {
      */
     Log(_logs) {
         try {
-            const node_name = _logs.env.get("NR_NODE_NAME");
-            const flow_name = _logs.env.get("NR_FLOW_NAME");
-            this.EmitEvents_logger_log({level: _logs.level, msg: _logs.msg, obj: {obj: _logs.obj || {}, node: node_name, flow: flow_name}});
-            if (this.#_SubNodes[flow_name].debug) {
-                const resp = {payload: _logs.msg,
-                    topic: 'Log message'
-                };
-                this.#_SubNodes[flow_name].send(resp);
+            if (_logs.env == undefined) {
+                this.EmitEvents_logger_log({level: _logs.level, msg: _logs.msg, obj: {obj: _logs.obj ?? {}, module: _logs.module ?? 'UserSpace'}});
             }
+            else {
+                const node_name = _logs.env.get("NR_NODE_NAME");
+                const flow_name = _logs.env.get("NR_FLOW_NAME");
+                this.EmitEvents_logger_log({level: _logs.level, msg: _logs.msg, obj: {obj: _logs.obj || {}, node: node_name, flow: flow_name, module: _logs.module ?? 'UserSpace'}});
+                if (this.#_SubNodes[flow_name].debug) {
+                    const resp = {payload: _logs.msg,
+                        topic: 'Log message'
+                    };
+                    this.#_SubNodes[flow_name].send(resp);
+                }
+            }
+            
         }
         catch (e) {
             this.EmitEvents_logger_log({level: 'W', msg: `Cannot send message: ${e}`, obj: _logs});
