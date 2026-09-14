@@ -84,7 +84,7 @@ class ClassBaseService_S {
         if (!validName) throw new Error(ERROR_INVALID_SERVICE_NAME);*/
         /* *******************  */
         this.#_Name = _name; 
-        this.#_BusNameList = _busNameList;
+        this.#_BusNameList =  [...new Set(_busNameList)];
         this.#_Status = STATUS_INACTIVE;
         this.#_GlobalBusList = _busList;
         // инициализация Node-red интерфейса службы

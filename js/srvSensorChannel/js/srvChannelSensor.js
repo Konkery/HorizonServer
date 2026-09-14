@@ -1,5 +1,4 @@
-// const ClassChannel_S = require('../../srvChannel/js/srvChannel'); DEBUG
-const ClassChannel_S = require('./srvChannel');
+const ClassChannel_S = require('../../srvChannel/js/srvChannel'); 
 
 // ### ПОДПИСКИ
 const COM_DATA_RAW_GET = 'all-data-raw-get';
@@ -26,6 +25,10 @@ const VALUE_TYPE_NUMBER = 'number';
 const VALUE_TYPE_STRING = 'string';
 
 const VIRTUAL_SOURCE_NAME = 'virtual';
+
+const valIsEqual = (a, b, x) => {
+    return Math.abs(a - b) <= Math.abs(a) * (x / 100);
+};
 
 /**
  * @typedef SensorOptsType 
@@ -86,13 +89,15 @@ class ClassSensorInfo {
     }
 }
 
+const COM_ALL_DATA_FINE_SET = 'all-data-fine-set';
+const COM_ALL_DATA_FINE_GET = 'all-data-fine-get';
 /**
  * @class
  * @description Класс, представляющий каждый отдельно взятый канал датчика в качестве службы фреймворка.
  */
 class ClassChannelSensor extends ClassChannel_S {
     #_Value;
-
+    #_ValueAvg;
     /**
      * @typedef TypeServiceOpts
      * @property {[ClassBus_S]} _busList
@@ -117,8 +122,11 @@ class ClassChannelSensor extends ClassChannel_S {
         super({ _busNameList, _busList, _advOpts });
 
         /** Основные поля */
-        this.#_Value = 0;
-
+        this.#_Value = _advOpts?.Value;
+        if (typeof this.#_Value === 'number') {
+            this.Buffer.push(this.#_Value);
+        }
+        this.#_ValueAvg = _advOpts?.Value;
         this._Bypass = false;
         this._DataUpdated = false;
         this._DataWasRead = false;
@@ -133,12 +141,19 @@ class ClassChannelSensor extends ClassChannel_S {
         // if (this.Status != STATUS_ACTIVE) return undefined;
 
         this._DataUpdated = false;
-        this._Value = (this._DataWasRead || this._Bypass || this.ValueType != VALUE_TYPE_NUMBER)
-            ? this.#_Value
-            : this.Buffer.Filter();
         this._DataWasRead = true;
 
         return this.#_Value;
+    }
+
+    get ValueAvg() {
+        this._DataUpdated = false;
+        this.#_ValueAvg = this._DataWasRead ? this.#_ValueAvg 
+                       : this._Bypass || this.ValueType != VALUE_TYPE_NUMBER ? this.#_Value
+                       : this.Buffer.Filter();
+        this._DataWasRead = true;
+
+        return this.#_ValueAvg;
     }
 
     /**
@@ -166,19 +181,21 @@ class ClassChannelSensor extends ClassChannel_S {
             if (typeof val != 'number') {
                 val = val_preproc;
                 this.EmitEvents_logger_log({ level: 'W', msg: `Failed to apply math transform to value ${_val}`, obj: this });
-            } else
+            } else {
                 this.Buffer.push(val);
-
+            }
             if (this.SavingValues.raw) 
                 this.EmitEvents_providermdb_data_write({ arg: ['raw'], value: [val_preproc] });
         }
-        
+        const prevValue = this.#_Value;
         this.#_Value = val;
-
-        this.EmitEvents_all_data_fine_set();
-        if (this.SavingValues.fine) 
-            this.EmitEvents_providermdb_data_write({ arg: ['fine'], value: [val] });
-
+        if (!valIsEqual(prevValue, val, this.ChangeThreshold)) {
+            this.EmitEvents_all_data_fine_set();
+            
+            if (this.SavingValues.fine) 
+                this.EmitEvents_providermdb_data_write({ arg: ['fine'], value: [val] });
+        }
+        
         this._DataUpdated = true;
         this._DataWasRead = false;
 
@@ -196,6 +213,11 @@ class ClassChannelSensor extends ClassChannel_S {
         super.HandlerEvents_all_init_stage1_set(_topic, _msg);
         const busName = this.SourceName == VIRTUAL_SOURCE_NAME ? 'dataBus' : this.ProtocolBusName;
         this.FillEventOnList(busName, [COM_DM_DEVLIST_SET, COM_DATA_RAW_GET]);
+
+        this.FillEventOnList('dataBus', this.StateChName 
+            ? [COM_ALL_DATA_FINE_SET, COM_ALL_DATA_FINE_GET] 
+            : [COM_ALL_DATA_FINE_GET]);
+
         this.EmitEvents_dm_new_channel();
         this.EmitEvents_all_ch_new();
     }
@@ -208,11 +230,12 @@ class ClassChannelSensor extends ClassChannel_S {
     EmitEvents_all_data_fine_set() {
         const msg = {
             dest: 'all',
-            com: COM_DATA_FINE_SET,
+            com: COM_ALL_DATA_FINE_SET,
             arg: [this.Name],
             value: [{
                 Name: this.Name,
                 Value: this.Value,
+                ValueAvg: this.ValueAvg,
                 ValueSuppressed: this._ValueSuppressed,
                 ChName: this.ChName,
                 ChAlias: this.ChAlias,
@@ -240,10 +263,32 @@ class ClassChannelSensor extends ClassChannel_S {
             if ((ch_name === this.NamePLC || ch_name === this.Name) && source_name === this.SourceName) {
                 this.allDataRawGetEvent = Date.now();
                 const value = _msg.value[0]?.value[0];
-                if (value) this.Value = value;
+                this.Value = value;
             }
         } catch (e) {
             this.EmitEvents_logger_log({ msg: `Error while processing data-daw msg`, level: 'E', obj: _msg });
+        }
+    }
+
+    /**
+     * @method
+     * @description Вызывает команду изменения значения при обновление сенсорного state-канала. 
+     * @param {string} _topic 
+     * @param {*} _msg 
+     */
+    HandlerEvents_all_data_fine_set(_topic, _msg) {
+        const [chName] = _msg.arg;
+        if (chName == this.StateChName) {
+            const [{ Value, ValueSuppressed }] = _msg.value;
+            if (!ValueSuppressed)
+                this.SetValue(Value);
+        }
+    }
+    
+    HandlerEvents_all_data_fine_get(_topic, _msg) {
+        const [chName] = _msg.arg;
+        if (chName == this.Name) {
+            this.EmitEvents_all_data_fine_set();
         }
     }
 
