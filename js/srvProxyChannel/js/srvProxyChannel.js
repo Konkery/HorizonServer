@@ -110,7 +110,10 @@ class ClassProxyChannel extends ClassBaseService_S {
      * @returns {Object} val        - значение указанного канала
      */
     GetValue( _chName ) {
-        return this.ServicesState[_chName].Service.Value;
+        if (this.ServicesState[_chName] != undefined)
+            return this.ServicesState[_chName].Service.Value;
+        else
+            return undefined;
     }
 
     /**

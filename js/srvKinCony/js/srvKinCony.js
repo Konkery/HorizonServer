@@ -121,7 +121,7 @@ class KinCony extends ClassBaseService_S {
             }
         }
         catch (e) {
-            console.log (e.message);
+            this.EmitEvents_logger_log({level: 'E', msg: `Unexpected error at 'HandlerEvents_modbuskcs_msg_get': ${e.message}`, obj: {exception: e.toString()}});
         }
         
     }

@@ -13,7 +13,7 @@ class ModbusClientTCP extends ClassModbusBase_S {
      * @param {[ClassBus_S]} _busList - список шин, созданных в проекте
      */
     constructor({ _busList, _primaryBus, _node, _protocol }) {
-        super({ _name: THIS_NAME, _busNameList: ['sysBus', _primaryBus, 'logBus'], _busList, _node, _type: 'TCP' });
+        super({ _name: THIS_NAME, _busNameList: ['sysBus', _primaryBus, 'logBus', 'dataBus'], _busList, _node, _type: 'TCP' });
         this.#_Protocol = _protocol;
     }
 
