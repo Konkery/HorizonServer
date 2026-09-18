@@ -133,8 +133,14 @@ class MW_DRS240 extends ClassBaseService_S {
                 this.EmitEvents_proxymodbusdrs_msg_get({arg: [srcName, 4], value: [val.data[0] * this.#_Sources[srcName].Scales.V_IN]});
                 break;
             case 0x60:// Выходные напряжение и сила тока
-                this.EmitEvents_proxymodbusdrs_msg_get({arg: [srcName, 0], value: [val.data[0] * this.#_Sources[srcName].Scales.V_OUT]});
-                this.EmitEvents_proxymodbusdrs_msg_get({arg: [srcName, 1], value: [val.data[1] * this.#_Sources[srcName].Scales.I_OUT]});
+                const u = val.data[0] * this.#_Sources[srcName].Scales.V_OUT;
+                const i = val.data[1] * this.#_Sources[srcName].Scales.I_OUT;
+                const p = u * i;
+                const short = (i < 0.2 && u < 10.0) ? 1 : 0;
+                this.EmitEvents_proxymodbusdrs_msg_get({arg: [srcName, 0], value: [u]});
+                this.EmitEvents_proxymodbusdrs_msg_get({arg: [srcName, 1], value: [i]});
+                this.EmitEvents_proxymodbusdrs_msg_get({arg: [srcName, 64], value: [p]});
+                this.EmitEvents_proxymodbusdrs_msg_get({arg: [srcName, 65], value: [short]});
                 /*if ((val.data[1] * this.#_Sources[srcName].Scales.I_OUT) > 0.5 || (val.data[0] * this.#_Sources[srcName].Scales.V_OUT) < 5.0) {
                     this.EmitEvents_logger_log({level: 'D', msg: `[${Date.now()}] [${srcName}] I: ${(val.data[1] * this.#_Sources[srcName].Scales.I_OUT).toFixed(2)} A, U: ${(val.data[0] * this.#_Sources[srcName].Scales.V_OUT).toFixed(2)} V`});
                 }*/             

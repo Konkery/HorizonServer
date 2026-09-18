@@ -126,8 +126,14 @@ class RL_NLS extends ClassBaseService_S {
                 this.EmitEvents_proxymodbusnls_msg_get({arg: [srcName, 4], value: [val.data[4] / 10]});
                 break;
             case 0x01:
-                this.EmitEvents_proxymodbusnls_msg_get({arg: [srcName, 1], value: [val.data[0] / 10]});
-                this.EmitEvents_proxymodbusnls_msg_get({arg: [srcName, 2], value: [val.data[1] / 1000]});
+                const u = val.data[0] / 10;
+                const i = val.data[1] / 1000;
+                const p = i * u;
+                const short = (i < 0.2 && u < 10.0) ? 1 : 0;
+                this.EmitEvents_proxymodbusnls_msg_get({arg: [srcName, 1], value: [u]});
+                this.EmitEvents_proxymodbusnls_msg_get({arg: [srcName, 2], value: [i]});
+                this.EmitEvents_proxymodbusnls_msg_get({arg: [srcName, 32], value: [p]});
+                this.EmitEvents_proxymodbusnls_msg_get({arg: [srcName, 33], value: [short]});
                 break;
             case 0x10:
                 this.EmitEvents_proxymodbusnls_msg_get({arg: [srcName, 5], value: [(val.data[0])]});

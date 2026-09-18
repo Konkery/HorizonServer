@@ -323,6 +323,17 @@ class ModbusBase extends ClassBaseService_S {
         }
         else if (_error) {
             const source = this.#_Sources[_task.source];
+            let old_V = this.ServicesState[`${source.Name}_mb_errors`].Service.Value;
+            if (old_V == undefined) {old_V = 0;}
+            old_V++;
+            const msg = {
+                com: 'all-data-raw-get',
+                dest: `${source.Name}_mb_errors`,
+                source: `modbusclient${SHORT_TYPES[TYPES.indexOf(this.#_Type)]}`,            
+                arg: [_error],
+                value: [old_V]
+            };
+            this.EmitMsg('dataBus', msg.com, msg);
             switch (_error) {
                 case 1: 
                     this.EmitEvents_logger_log({level: 'E', msg: `Max fail count for ${_task.source} reached. Closing ${source.IP ?? source.Serial}`, obj: _task.comm});

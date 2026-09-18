@@ -298,14 +298,15 @@ class ClassProcessSrv extends ClassBaseService_S {
                 try {
                     const source = this.#_SourcesState[channel.SourceName];
                     if (typeof source === 'undefined') {
-                        this.EmitEvents_logger_log({level: 'W', msg: `Cannot find source '${channel.SourceName}' for channel '${channel.Name}'.`});
-                    }
-                    else if (typeof source === 'virtual') {
-                        let chService = Object.assign({}, _dbTemplates.find(template => template.Protocol == 'virtual'));
-                        chService.AdvancedOptions = channel;
-                        chService.Service = new (require(config[channel.ChType]))({_busList: this.#_GBusList, _busNameList: chService.BusList.concat([chService.PrimaryBus]), _advOpts: channel});
-                        chService.Name = chService.Service.Name;
-                        this.#_ServicesState[chService.Name] = chService;
+                        if (channel.SourceName == 'virtual') {
+                            let chService = Object.assign({}, _dbTemplates.find(template => template.Protocol == 'virtual'));
+                            chService.AdvancedOptions = channel;
+                            chService.Service = new (require(config[channel.ChType]))({_busList: this.#_GBusList, _busNameList: chService.BusList.concat([chService.PrimaryBus]), _advOpts: channel});
+                            chService.Name = chService.Service.Name;
+                            this.#_ServicesState[chService.Name] = chService;
+                        }
+                        else
+                            this.EmitEvents_logger_log({level: 'W', msg: `Cannot find source '${channel.SourceName}' for channel '${channel.Name}'.`});
                     }
                     else if (source.Property.includes('r')) {
                         let chService = Object.assign({}, _dbTemplates.find(template => template.Protocol == source.Protocol));

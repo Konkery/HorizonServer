@@ -138,7 +138,9 @@ class WirenBoard extends ClassBaseService_S {
                 this.EmitEvents_proxymodbuswb_msg_get({arg: [srcName, 7], value: [val.data[7] / 1000]});
 
                 this.EmitEvents_proxymodbuswb_msg_get({arg: [srcName, 8], value: [val.data[8] / 100]});
-                this.EmitEvents_proxymodbuswb_msg_get({arg: [srcName, 9], value: [val.data[9] / 100]});            
+                this.EmitEvents_proxymodbuswb_msg_get({arg: [srcName, 9], value: [val.data[9] / 100]});
+                
+                this.EmitEvents_proxymodbuswb_msg_get({arg: [srcName, 32], value: [val.data[8] / 100]});
                 break;
             default:
                 break;
