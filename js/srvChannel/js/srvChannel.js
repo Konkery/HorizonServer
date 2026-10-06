@@ -7,6 +7,7 @@ const COM_DM_NEW_CH = 'dm-new-channel';
 
 // EMITS
 const COM_PMDB_DEV_CONF_GET = 'providermdb-device-config-get';
+const COM_PMDB_LAST_VALUE_GET = 'providermdb-last-value-get';
 
 const COM_CH_ALARM = 'all-ch-alarm';
 const COM_ALL_CH_NEW = 'all-ch-new';
@@ -246,8 +247,8 @@ class ClassBaseChannel_S extends ClassBaseService_S {
  * @description Класс, представляющий каждый отдельно взятый канал датчика в качестве службы фреймворка.
  */
 class ClassChannel_S extends ClassBaseChannel_S {
-    #_MappingCompleted = false;
-    #_Activated = false;
+    #_SourceOk = true;  // TODO: временно true по умолчанию, пока не будет реализован механизм получения сообщений от соурсов
+    #_Activated = true;
     #_ChangeThreshold;
 
     #_DeviceInfo = null;
@@ -302,7 +303,7 @@ class ClassChannel_S extends ClassBaseChannel_S {
      * active - служба сопоставлена с каналом источника, подключение к источнику есть
      */
     get Status() {
-        return (this.SourcesState[this.SourceName]?.IsConnected && this.#_MappingCompleted && this.#_Activated) ? STATUS_ACTIVE : STATUS_INACTIVE;
+        return (this.SourcesState[this.SourceName]?.IsConnected || this.#_SourceOk) && this.#_Activated ? STATUS_ACTIVE : STATUS_INACTIVE;
     }
 
     /**
@@ -474,7 +475,6 @@ class ClassChannel_S extends ClassBaseChannel_S {
         // ChType - всегда ключ 'sensor' | 'actuator'
         const list_includes_ch = sens_act_lists[this.ChType]?.find(_note => _note === this.Name || _note === this.NameLHP);
         if (list_includes_ch && source_name === this.SourceName) {
-            this.#_MappingCompleted = true;
             this.#_Activated = true;
         }
     }
@@ -537,6 +537,20 @@ class ClassChannel_S extends ClassBaseChannel_S {
             this.SetupMathChannel(config);
             this.EmitEvents_all_ch_config_get({ hash });
         }
+    }
+
+    /**
+     * @method
+     * @description Сохраняет информацию о источниках.
+     * @param {string} _topic
+     * @param {ClassBusMsg_S} _msg  
+     * @returns 
+     */
+    async HandlerEvents_all_connections_done(_topic, _msg) {
+        const source_names = _msg.value;
+        if (!source_names.includes(this.SourceName)) return;
+        this.#_SourceOk = true;
+        // TODO: _Activated только сейчас, чтобы игнорировать сообщения пока канал не получит старое значение из БД.
     }
 
     /**
@@ -613,6 +627,15 @@ class ClassChannel_S extends ClassBaseChannel_S {
             dest: 'providermdb',
             demandRes: true,
             com: COM_PMDB_DEV_CONF_GET,
+        }
+        this.EmitMsg('mdbBus', msg.com, msg, { timeout: DEV_CONF_GET_TIMEOUT });
+    }
+
+    async EmitEvents_providermdb_last_value_get() {
+        const msg = {
+            dest: 'providermdb',
+            demandRes: true,
+            com: COM_PMDB_LAST_VALUE_GET,
         }
         this.EmitMsg('mdbBus', msg.com, msg, { timeout: DEV_CONF_GET_TIMEOUT });
     }

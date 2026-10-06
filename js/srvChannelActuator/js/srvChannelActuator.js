@@ -145,8 +145,8 @@ class ClassChannelActuator extends ClassChannel_S {
             if (!this.#_ValueConfirm && this.SavingValues.fine)
                 this.EmitEvents_providermdb_data_write({ arg: ['fine'], value: [val] });
         }
-
-        this.EmitEvents_proxy_send({ value: [val] })
+        if (this.SourceName != VIRTUAL_SOURCE_NAME)
+            this.EmitEvents_proxy_send({ value: [val] })
     }
 
     /**

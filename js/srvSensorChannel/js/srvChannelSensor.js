@@ -13,6 +13,7 @@ const COM_ALL_INIT1 = 'all-init-stage1-set';
 
 const COM_ALL_CH_STATUS_GET = 'all-ch-status-get';
 const COM_ALL_CH_STATUS_SET = 'all-ch-status-set';
+const COM_ALL_CONN_DONE = 'all-connections-done';
 
 // ### ПРОЧЕЕ
 const DEV_CONF_GET_TIMEOUT = 500;
@@ -212,7 +213,7 @@ class ClassChannelSensor extends ClassChannel_S {
     HandlerEvents_all_init_stage1_set(_topic, _msg) {
         super.HandlerEvents_all_init_stage1_set(_topic, _msg);
         const busName = this.SourceName == VIRTUAL_SOURCE_NAME ? 'dataBus' : this.ProtocolBusName;
-        this.FillEventOnList(busName, [COM_DM_DEVLIST_SET, COM_DATA_RAW_GET]);
+        this.FillEventOnList(busName, [COM_DM_DEVLIST_SET, COM_DATA_RAW_GET, COM_ALL_CONN_DONE]);
 
         this.FillEventOnList('dataBus', this.StateChName 
             ? [COM_ALL_DATA_FINE_SET, COM_ALL_DATA_FINE_GET] 
@@ -313,6 +314,20 @@ class ClassChannelSensor extends ClassChannel_S {
         } catch (e) {
             this.EmitEvents_logger_log({ level: 'E', msg: 'Failed to create DeviceInfo obj', obj: device });
         }
+    }
+
+    /**
+     * @method
+     * @description Сохраняет информацию о источниках.
+     * @param {string} _topic
+     * @param {ClassBusMsg_S} _msg  
+     * @returns 
+     */
+    async HandlerEvents_all_connections_done(_topic, _msg) {
+        super.HandlerEvents_all_connections_done(_topic, _msg);
+        try {
+            this.#_Value = await this.EmitEvents_providermdb_last_value_get();
+        } catch (e) {}
     }
 }
 
